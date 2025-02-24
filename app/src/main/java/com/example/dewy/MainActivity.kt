@@ -22,7 +22,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /**
  * GENERAL NOTES:
@@ -50,30 +52,32 @@ fun WeatherScreen() {
         Row(modifier = Modifier.fillMaxWidth()){
             Text(text = "Dewy :)", style = MaterialTheme.typography.headlineMedium)
         }
-        Row(modifier = Modifier.fillMaxWidth()){
-            Text(text = "St. Paul, MN", style = MaterialTheme.typography.titleMedium)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(text = "St. Paul, MN", style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp))
         }
-        // This is the row that needs to have a temp (72), "Feels like...", and an icon!
-        // NOTE: We want to use the tool the Instructor referenced that would place both objects
-        // (text lines and the icon) equally apart and at the ends.
-        Row(modifier = Modifier.fillMaxWidth()) {
-            // Column for the first two lines of text.
+        // Row that has the text elements and icon.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+            ) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "72°", style = MaterialTheme.typography.displayMedium)
-                // Put some space between the two text lines.
+                Text(text = "72°", style = MaterialTheme.typography.displayMedium.copy(fontSize = 64.sp))
                 Spacer(modifier = Modifier.size(4.dp))
                 Text(text = "Feels like 78°")
             }
-            // Split up the text and icon.
-            Spacer(modifier = Modifier.size(48.dp))
-            // Image for the icon we wish to display.
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
