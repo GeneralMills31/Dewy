@@ -116,25 +116,25 @@ fun WeatherScreen() {
                 .padding(vertical = 32.dp, horizontal = 32.dp)
         ) {
             Text(
-                text = "Low: 65°F",
+                text = "Low 65°F",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .padding(vertical = 2.dp)
             )
             Text(
-                text = "High: 80°F",
+                text = "High 80°F",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .padding(vertical = 2.dp)
             )
             Text(
-                text = "Humidity: 100%",
+                text = "Humidity 100%",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .padding(vertical = 2.dp)
                 )
             Text(
-                text = "Pressure: 1023 hPa",
+                text = "Pressure 1023 hPa",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .padding(vertical = 2.dp)
