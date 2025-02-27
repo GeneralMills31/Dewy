@@ -59,9 +59,9 @@ fun WeatherScreen() {
         // DEWY ROW
         Row(
             modifier = Modifier
-                .background(Color.Gray)
+                .background(Color.LightGray)
                 .fillMaxWidth()
-                .padding(vertical = 10.dp, horizontal = 10.dp)
+                .padding(vertical = 10.dp, horizontal = 14.dp)
         ) {
             Text(text = "Dewy :)", style = MaterialTheme.typography.headlineSmall)
         }
@@ -105,7 +105,7 @@ fun WeatherScreen() {
                 Image(
                     painter = painterResource(id = R.drawable.sunny),
                     contentDescription = "Current Weather Icon",
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(60.dp)
                 )
             }
         }
