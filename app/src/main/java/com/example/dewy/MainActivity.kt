@@ -29,8 +29,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/**
- * GENERAL NOTES:
+/** GENERAL NOTES:
  *  Icon Set = Kawaii Flat
  *  https://www.flaticon.com/search?style_id=134&author_id=1&word=weather&type=standard
  */
