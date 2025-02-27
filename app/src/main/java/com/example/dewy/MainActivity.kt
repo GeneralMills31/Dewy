@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,7 +63,7 @@ fun WeatherScreen() {
                 .fillMaxWidth()
                 .padding(vertical = 10.dp, horizontal = 14.dp)
         ) {
-            Text(text = "Dewy :)", style = MaterialTheme.typography.headlineSmall)
+            Text(text = stringResource(id = R.string.app_name), style = MaterialTheme.typography.headlineSmall)
         }
         // CITY ROW
         Row(
@@ -71,7 +72,7 @@ fun WeatherScreen() {
                 .padding(vertical = 16.dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            Text(text = "St. Paul, MN", style = MaterialTheme.typography.headlineSmall)
+            Text(text = stringResource(id = R.string.city), style = MaterialTheme.typography.headlineSmall)
         }
         // ICON ROW
         Row(
@@ -88,9 +89,9 @@ fun WeatherScreen() {
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "72°", style = MaterialTheme.typography.displayMedium.copy(fontSize = 80.sp))
+                Text(text = stringResource(id = R.string.temp), style = MaterialTheme.typography.displayMedium.copy(fontSize = 80.sp))
                 Spacer(modifier = Modifier.size(4.dp))
-                Text(text = "Feels like 78°")
+                Text(text = stringResource(id = R.string.feels_like))
             }
             Column(
                 // In the first column, center the data horizontally.
@@ -103,7 +104,7 @@ fun WeatherScreen() {
                 // Our icon
                 Image(
                     painter = painterResource(id = R.drawable.sunny),
-                    contentDescription = "Current Weather Icon",
+                    contentDescription = stringResource(id = R.string.weather_icon_desc),
                     modifier = Modifier.size(60.dp)
                 )
             }
@@ -115,25 +116,25 @@ fun WeatherScreen() {
                 .padding(vertical = 32.dp, horizontal = 32.dp)
         ) {
             Text(
-                text = "Low 65°F",
+                text = stringResource(id = R.string.low_temp),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .padding(vertical = 2.dp)
             )
             Text(
-                text = "High 80°F",
+                text = stringResource(id = R.string.high_temp),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .padding(vertical = 2.dp)
             )
             Text(
-                text = "Humidity 100%",
+                text = stringResource(id = R.string.humidity),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .padding(vertical = 2.dp)
                 )
             Text(
-                text = "Pressure 1023 hPa",
+                text = stringResource(id = R.string.pressure),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .padding(vertical = 2.dp)
