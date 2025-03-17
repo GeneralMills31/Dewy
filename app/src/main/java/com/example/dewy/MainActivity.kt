@@ -97,6 +97,37 @@ object RetrofitClient {
     }
 }
 
+/*
+Need to include all this on the main screen!!!
+
+"Current conditions data is displayed for all data types
+ from the data that is received by the API call."
+
+API Response: WeatherData(main=Main(temp=5.89, feelsLike=0.0, tempMin=0.0, tempMax=0.0, humidity=87, pressure=1027), weather=[WeatherCondition(description=broken clouds, icon=04n)])
+
+main: General condition (e.g., "Rain", "Clouds", "Clear")
+description: Detailed description (e.g., "light rain", "scattered clouds")
+icon: Icon ID for weather conditions (which you can map to display weather icons)
+speed: Wind speed (in meters per second)
+deg: Wind direction (in degrees)
+gust: Wind gust speed
+lat: Latitude
+lon: Longitude
+"name": "London",
+"sys": {
+  "country": "GB"
+}
+sunrise: Time of sunrise (in UNIX timestamp format)
+sunset: Time of sunset (in UNIX timestamp format)
+HOW TO CONVERT (Sunrise/Sunset):
+val sunriseTime = java.util.Date(sunriseTimestamp * 1000)
+val sunsetTime = java.util.Date(sunsetTimestamp * 1000)
+
+Update strings.xml where needed (so all strings are stored there).
+Use the API response for any other data we can display (such as swapping out the city name to represent
+the API call).
+ */
+
 // ViewModel to manage data fetching and hold LiveData
 class WeatherViewModel : ViewModel() {
     private val _weatherData = MutableLiveData<WeatherData?>()
