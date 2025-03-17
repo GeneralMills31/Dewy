@@ -1,6 +1,7 @@
 package com.example.dewy
 
 // TEST
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,6 +33,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import android.util.Log
+
 
 /** GENERAL NOTES:
  *  Icon Set = Kawaii Flat
@@ -45,10 +48,8 @@ import retrofit2.http.Query
  *  Create a ViewModel and use LiveData to interact with the data layer.
  */
 
-// Data needed to make an API call.
-enum class API_KEY(value: String) {
-    OPEN_WEATHER("5bc7c198df5901b12f19005827b097b7")
-}
+// API Key
+const val API_KEY = BuildConfig.OPENWEATHER_API_KEY
 
 // Data class to represent the JSON response
 @Serializable
@@ -60,7 +61,11 @@ data class WeatherData(
 @Serializable
 data class Main(
     val temp: Double,
-    val humidity: Int
+    @SerialName("feels_like") val feelsLike: Double,
+    @SerialName("temp_min") val tempMin: Double,
+    @SerialName("temp_max") val tempMax: Double,
+    val humidity: Int,
+    val pressure: Int
 )
 
 @Serializable
@@ -97,13 +102,26 @@ class WeatherViewModel : ViewModel() {
     private val _weatherData = MutableLiveData<WeatherData?>()
     val weatherData: LiveData<WeatherData?> = _weatherData
 
-    fun fetchWeather(city: String, apiKey: String) {
+    // Update with API key
+    fun fetchWeather(city: String) {
         viewModelScope.launch {
+            // Prints not working
+            // println("API Key: $API_KEY")
             try {
-                val response = RetrofitClient.instance.getWeather(city, apiKey)
+                // Debugging
+                Log.d("WeatherDebug", "API Key: $API_KEY")
+                // Updated with API key
+                val response = RetrofitClient.instance.getWeather(city, API_KEY)
+                // Troubleshooting
+                // println("API Response: $response")
+                Log.d("WeatherDebug", "API Response: $response")
                 _weatherData.postValue(response)
+            } catch (e: retrofit2.HttpException) {
+                //println("HTTP Exception: ${e.code()} - ${e.message()}")
+                Log.d("WeatherDebug", "HTTP Exception: ${e.code()} - ${e.message()}")
             } catch (e: Exception) {
-                _weatherData.postValue(null)
+                // println("General Exception: ${e.message}")
+                Log.d("WeatherDebug", "General Exception: ${e.message}")
             }
         }
     }
@@ -111,14 +129,13 @@ class WeatherViewModel : ViewModel() {
 
 // MainActivity where the UI is set
 class MainActivity : ComponentActivity() {
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             DewyTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    WeatherScreen()
-                }
+                Scaffold(modifier = Modifier.fillMaxSize()) { WeatherScreen() }
             }
         }
     }
@@ -130,6 +147,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
     val weatherData by viewModel.weatherData.observeAsState()
+
+    // Triggers the fetchWeather() function when the application is launched.
+
+    // London for testing
+    LaunchedEffect(Unit) {
+        viewModel.fetchWeather("London")
+    }
 
     Column(
         modifier = Modifier
@@ -163,14 +187,17 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = stringResource(id = R.string.temp), style = MaterialTheme.typography.displayMedium.copy(fontSize = 80.sp))
+                Text(
+                    // Might have to add strings to Strings.xml
+                    text = "${weatherData?.main?.temp}°C",
+                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 80.sp)
+                )
                 Spacer(modifier = Modifier.size(4.dp))
-                Text(text = stringResource(id = R.string.feels_like))
+                // Might have to add strings to Strings.xml
+                Text("Feels like: ${weatherData?.main?.temp}°C")
             }
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
@@ -180,16 +207,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                 )
             }
         }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 32.dp, horizontal = 32.dp)
-        ) {
-            weatherData?.let {
-                Text(text = "Temperature: ${it.main.temp}°C")
-                Text(text = "Humidity: ${it.main.humidity}%")
-                Text(text = "Description: ${it.weather.firstOrNull()?.description ?: "Unknown"}")
-            } ?: Text("No data available")
+        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 32.dp)) {
+            Text("Low: ${weatherData?.main?.tempMin}°C")
+            Text("High: ${weatherData?.main?.tempMax}°C")
+            Text("Humidity: ${weatherData?.main?.humidity}%")
+            Text("Pressure: ${weatherData?.main?.pressure} hPa")
         }
     }
 }
