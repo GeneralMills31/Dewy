@@ -51,11 +51,14 @@ import android.util.Log
 // API Key
 const val API_KEY = BuildConfig.OPENWEATHER_API_KEY
 
-// Data class to represent the JSON response
+// Data classes to represent the JSON response.
+// Holds relevant conditions data.
 @Serializable
 data class WeatherData(
     @SerialName("main") val main: Main,
-    @SerialName("weather") val weather: List<WeatherCondition>
+    @SerialName("weather") val weather: List<WeatherCondition>,
+    @SerialName("wind") val wind: Wind,
+    @SerialName("sys") val sys: Sys
 )
 
 @Serializable
@@ -72,6 +75,20 @@ data class Main(
 data class WeatherCondition(
     val description: String,
     val icon: String
+)
+
+@Serializable
+data class Wind(
+    val speed: Double,
+    val deg: Int,
+    val gust: Double
+)
+
+@Serializable
+data class Sys(
+    val country: String,
+    val sunrise: Long,
+    val sunset: Long
 )
 
 // Retrofit interface for API calls
@@ -221,7 +238,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                 Text(
                     // Might have to add strings to Strings.xml
                     text = "${weatherData?.main?.temp}°C",
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 80.sp)
+                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 40.sp)
                 )
                 Spacer(modifier = Modifier.size(4.dp))
                 // Might have to add strings to Strings.xml
@@ -243,6 +260,13 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
             Text("High: ${weatherData?.main?.tempMax}°C")
             Text("Humidity: ${weatherData?.main?.humidity}%")
             Text("Pressure: ${weatherData?.main?.pressure} hPa")
+            Text("Wind Speed: ${weatherData?.wind?.speed}MPH")
+            Text("Degree: ${weatherData?.wind?.deg}")
+            Text("Gusts: ${weatherData?.wind?.gust}MPH")
+            Text("Description: ${weatherData?.weather?.get(0)?.description}")
+            Text("Country: ${weatherData?.sys?.country}")
+            Text("Sunrise: ${weatherData?.sys?.sunrise}")
+            Text("Sunset: ${weatherData?.sys?.sunset}")
         }
     }
 }
