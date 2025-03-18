@@ -1,20 +1,34 @@
 package com.example.dewy
 
-// TEST
+// Imports
+// Ctrl + Alt + O to optimize imports.
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,19 +47,14 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 /** GENERAL NOTES:
  *  Icon Set = Kawaii Flat
  *  https://www.flaticon.com/search?style_id=134&author_id=1&word=weather&type=standard
- *
- *  Hard code location using either zip cope, city name, or long/lat pair.
- *
- *  Create a data class to match the JSON data and then fetch and deserialize the data (using
- *  Retrofit and Kotlin).
- *
- *  Create a ViewModel and use LiveData to interact with the data layer.
  */
 
 // API Key
@@ -114,37 +123,6 @@ object RetrofitClient {
     }
 }
 
-/*
-Need to include all this on the main screen!!!
-
-"Current conditions data is displayed for all data types
- from the data that is received by the API call."
-
-API Response: WeatherData(main=Main(temp=5.89, feelsLike=0.0, tempMin=0.0, tempMax=0.0, humidity=87, pressure=1027), weather=[WeatherCondition(description=broken clouds, icon=04n)])
-
-main: General condition (e.g., "Rain", "Clouds", "Clear")
-description: Detailed description (e.g., "light rain", "scattered clouds")
-icon: Icon ID for weather conditions (which you can map to display weather icons)
-speed: Wind speed (in meters per second)
-deg: Wind direction (in degrees)
-gust: Wind gust speed
-lat: Latitude
-lon: Longitude
-"name": "London",
-"sys": {
-  "country": "GB"
-}
-sunrise: Time of sunrise (in UNIX timestamp format)
-sunset: Time of sunset (in UNIX timestamp format)
-HOW TO CONVERT (Sunrise/Sunset):
-val sunriseTime = java.util.Date(sunriseTimestamp * 1000)
-val sunsetTime = java.util.Date(sunsetTimestamp * 1000)
-
-Update strings.xml where needed (so all strings are stored there).
-Use the API response for any other data we can display (such as swapping out the city name to represent
-the API call).
- */
-
 // ViewModel to manage data fetching and hold LiveData
 class WeatherViewModel : ViewModel() {
     private val _weatherData = MutableLiveData<WeatherData?>()
@@ -195,12 +173,29 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
     val weatherData by viewModel.weatherData.observeAsState()
+    // Placed here instead of inside LaunchedEffect as .current must be in a composable function.
+    val context = LocalContext.current
+    val city = context.getString(R.string.city)
+
+    // Function to convert the returned sunrise and sunset data into a readable time.
+    fun convertUnixToTime(unixTime: Long): String {
+        val date = Date(unixTime * 1000) // Convert seconds to milliseconds
+        val format = SimpleDateFormat("hh:mm a", Locale.getDefault()) // Format as HH:MM AM/PM
+        return format.format(date)
+    }
+
+    // Function to convert celsius to fahrenheit.
+    fun convertCelsiusToFahrenheit(c: Double): Double {
+        val f = (c * 9/5 + 32)
+        return f
+    }
+
 
     // Triggers the fetchWeather() function when the application is launched.
 
     // London for testing
     LaunchedEffect(Unit) {
-        viewModel.fetchWeather("London")
+        viewModel.fetchWeather(city)
     }
 
     Column(
@@ -236,13 +231,13 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    // Might have to add strings to Strings.xml
-                    text = "${weatherData?.main?.temp}°C",
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 40.sp)
+                    // Convert API response data to Fahrenheit.
+                    text = "${weatherData?.main?.temp?.let { convertCelsiusToFahrenheit(it) }?.toInt() ?: "N/A"}°",
+                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 80.sp)
                 )
                 Spacer(modifier = Modifier.size(4.dp))
-                // Might have to add strings to Strings.xml
-                Text("Feels like: ${weatherData?.main?.temp}°C")
+                // Convert API response data to Fahrenheit.
+                Text("Feels like: ${weatherData?.main?.temp?.let { convertCelsiusToFahrenheit(it) }?.toInt() ?: "N/A"}°")
             }
             Column(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -256,17 +251,17 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
             }
         }
         Column(modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 32.dp)) {
-            Text("Low: ${weatherData?.main?.tempMin}°C")
-            Text("High: ${weatherData?.main?.tempMax}°C")
+            Text("Low: ${weatherData?.main?.tempMin?.toInt()} (Missing on free version? | When using /weather)")
+            Text("High: ${weatherData?.main?.tempMax?.toInt()} (Missing on free version? | When using /weather)\"")
             Text("Humidity: ${weatherData?.main?.humidity}%")
             Text("Pressure: ${weatherData?.main?.pressure} hPa")
-            Text("Wind Speed: ${weatherData?.wind?.speed}MPH")
+            Text("Wind Speed: ${weatherData?.wind?.speed?.toInt()} MPH")
             Text("Degree: ${weatherData?.wind?.deg}")
-            Text("Gusts: ${weatherData?.wind?.gust}MPH")
+            Text("Gusts: ${weatherData?.wind?.gust?.toInt()} MPH")
             Text("Description: ${weatherData?.weather?.get(0)?.description}")
             Text("Country: ${weatherData?.sys?.country}")
-            Text("Sunrise: ${weatherData?.sys?.sunrise}")
-            Text("Sunset: ${weatherData?.sys?.sunset}")
+            Text("Sunrise: ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) } ?: "N/A"}")
+            Text("Sunset: ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) } ?: "N/A"}")
         }
     }
 }
