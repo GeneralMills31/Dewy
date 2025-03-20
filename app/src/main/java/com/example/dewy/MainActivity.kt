@@ -222,11 +222,15 @@ class WeatherViewModel : ViewModel() {
                 /* Updates weather data with data received from OpenWeatherMap API request. */
                 _weatherData.postValue(response)
             } catch (e: retrofit2.HttpException) {
-                /* Debugging */
+                /*
+                Debugging
                 Log.d("WeatherDebug", "HTTP Exception: ${e.code()} - ${e.message()}")
+                */
             } catch (e: Exception) {
-                /* Debugging */
+                /*
+                Debugging
                 Log.d("WeatherDebug", "General Exception: ${e.message}")
+                */
                 /* If error, set _weatherData to null. */
                 _weatherData.postValue(null)
             }
@@ -309,11 +313,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "${weatherData?.main?.temp?.toInt()}°",
+                    text = "${weatherData?.main?.temp?.toInt()}" + context.getString(R.string.degree_symbol_label),
                     style = MaterialTheme.typography.displayMedium.copy(fontSize = 80.sp)
                 )
                 Spacer(modifier = Modifier.size(4.dp))
-                Text(context.getString(R.string.feels_like_label) + " ${weatherData?.main?.temp?.toInt()}°")
+                Text(context.getString(R.string.feels_like_label) + " ${weatherData?.main?.temp?.toInt()}" + context.getString(R.string.degree_symbol_label))
             }
             Column(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
