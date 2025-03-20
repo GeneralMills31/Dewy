@@ -1,6 +1,9 @@
 import java.util.Properties
 
-// Load local.properties manually
+/*
+Load local.properties manually.
+Was having issues loading/utilizing local.properties in the main application file.
+*/
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) {
@@ -29,7 +32,7 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Build Config for Assignment 3
+        /* Build Config for Assignment 3 */
         buildConfigField("String", "OPENWEATHER_API_KEY", "\"$apiKey\"")
     }
 
@@ -74,15 +77,13 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    // Dependencies for Assignment 3
+    /* Dependencies for Assignment 3 */
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit)
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
-    // ViewModel for Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0")
-    // Kotlin Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 }
