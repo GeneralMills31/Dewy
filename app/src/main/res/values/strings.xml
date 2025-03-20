@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Dewy</string>
-    <string name="city">St. Paul, MN</string>
+    <string name="city">Saint Paul</string>
     <string name="temp">72°</string>
     <string name="feels_like">Feels like 78°</string>
     <string name="low_temp">Low 65°F</string>
@@ -8,4 +8,23 @@
     <string name="humidity">Humidity 100%</string>
     <string name="pressure">Pressure 1023 hPa</string>
     <string name="weather_icon_desc">Current Weather Icon</string>
+    <string name="low_label">Low:</string>
+    <string name="high_label">High:</string>
+    <string name="humidity_label">Humidity:</string>
+    <string name="pressure_label">Pressure:</string>
+    <string name="wind_label">Wind:</string>
+    <string name="degree_label">Degree:</string>
+    <string name="gust_label">Gust:</string>
+    <string name="desc_label">Description:</string>
+    <string name="country_label">Country:</string>
+    <string name="sunrise_label">Sunrise:</string>
+    <string name="sunset_label">Sunset:</string>
+    <string name="feels_like_label">Feels Like:</string>
+    <string name="degree_symbol_label">°</string>
+    <string name="percent_label">%</string>
+    <string name="hpa_label">hPa</string>
+    <string name="mph_label">MPH</string>
+
 </resources>
+
+    <!-- Removed State from "city" string for assignment 3 (Originally: St. Paul, MN) -->
