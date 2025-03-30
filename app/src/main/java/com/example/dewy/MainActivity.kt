@@ -42,6 +42,7 @@ import com.example.dewy.ui.theme.DewyTheme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -165,6 +166,35 @@ data class Sys(
     val sunset: Long
 )
 
+/* Main API response object (for Forecast). */
+/* ASSIGNMENT 4 */
+@Serializable
+data class ForecastData(
+    @SerialName("city") val city: City,
+    @SerialName("list") val list: List<DailyForecast>,
+    @SerialName("cnt") val cnt: Int
+)
+
+@Serializable
+data class City(
+    @SerialName("name") val name: String,
+    @SerialName("country") val country: String
+)
+
+@Serializable
+data class DailyForecast(
+    @SerialName("dt") val dt: Long,
+    @SerialName("temp") val temp: Temperature,
+    @SerialName("weather") val weather: List<WeatherCondition>
+)
+
+@Serializable
+data class Temperature(
+    @SerialName("day") val day: Double,
+    @SerialName("min") val min: Double,
+    @SerialName("max") val max: Double
+)
+
 /*
 Get weather data from OpenWeatherMap using Retrofit.
 Defines how Retrofit fetches the data.
@@ -181,6 +211,14 @@ interface WeatherApi {
         /* Get temperature data in Fahrenheit. */
         @Query("units") units: String = "imperial"
     ): WeatherData
+
+    /* ASSIGNMENT 4 */
+    @GET("forecast/daily?")
+    suspend fun getForecast(
+        @Query("zip") zip: String,
+        @Query("appid") apiKey: String,
+        @Query("units") units: String = "imperial",
+    ): ForecastData
 }
 
 /* Creates an instance (singleton) of Retrofit. */
@@ -188,10 +226,22 @@ object RetrofitClient {
     /* Root URL for all API requests. */
     private const val BASE_URL = "https://api.openweathermap.org/data/2.5/"
 
+    /* ASSIGNMENT 4 */
+    private val client = OkHttpClient.Builder()
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val response = chain.proceed(request)
+            val responseBody = response.peekBody(Long.MAX_VALUE)
+            Log.d("API_RESPONSE", responseBody.string())
+            response
+        }
+        .build()
+
     /* Initialize Retrofit only when accessed (by lazy). */
     val instance: WeatherApi by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .client(client) /* ASSIGNMENT 4 */
             /* Converts JSON responses into Kotlin objects. */
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -203,8 +253,12 @@ object RetrofitClient {
 class WeatherViewModel : ViewModel() {
     /* Hold API response. */
     private val _weatherData = MutableLiveData<WeatherData?>()
+    /* ASSIGNMENT 4 */
+    private val _forecastData = MutableLiveData<ForecastData?>()
     /* UI will observe this to update data. */
     val weatherData: LiveData<WeatherData?> = _weatherData
+    /* ASSIGNMENT 4 */
+    val forecastData: LiveData<ForecastData?> = _forecastData
 
     fun fetchWeather(city: String) {
         /* Means network call is run asynchronously. */
@@ -236,6 +290,25 @@ class WeatherViewModel : ViewModel() {
             }
         }
     }
+
+    /* ASSIGNMENT 4 */
+    fun fetchForecast(zip: String) {
+        viewModelScope.launch {
+            try {
+                Log.d("WeatherViewModel", "Fetching forecast for $zip with API key $API_KEY")
+                val response = RetrofitClient.instance.getForecast(zip, API_KEY)
+                Log.d("WeatherViewModel", "Forecast API Response: $response")
+                _forecastData.postValue(response)
+            } catch (e : retrofit2.HttpException) {
+                Log.e("WeatherViewModel", "HTTP Exception: ${e.code()} - ${e.message()}")
+                val errorBody = e.response()?.errorBody()?.string()
+                Log.e("WeatherViewModel", "Error body: $errorBody")
+            } catch (e : Exception) {
+                Log.e("WeatherViewModel", "General Exception: ${e.message}")
+                _forecastData.postValue(null)
+            }
+        }
+    }
 }
 
 /* MainActivity where the UI is set. */
@@ -261,6 +334,8 @@ class MainActivity : ComponentActivity() {
 fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
     /* Observes weather data | Updates UI when LiveData changes. */
     val weatherData by viewModel.weatherData.observeAsState()
+    /* ASSIGNMENT 4 */
+    val forecastData by viewModel.forecastData.observeAsState()
     /*
     Placed here instead of inside LaunchedEffect as .current must be in a composable function.
     Gets city name from strings.xml.
@@ -278,6 +353,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
     /* Starts the fetchWeather() function when the application is launched. */
     LaunchedEffect(Unit) {
         viewModel.fetchWeather(city)
+    }
+
+    /* ASSIGNMENT 4 */
+    LaunchedEffect(Unit) {
+        viewModel.fetchForecast("55101,us")
     }
 
     Column(
@@ -344,6 +424,20 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
             Text(context.getString(R.string.sunrise_label) + " ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) }}")
             Text(context.getString(R.string.sunset_label) + " ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) }}")
         }
+
+        /* ASSIGNMENT 4 TESTING */
+        forecastData?.let { data ->
+            Column {
+                Text("Weather Forcast for ${data.city.name}")
+
+                data.list.forEach { daily ->
+                    Text("Date: ${convertUnixToTime(daily.dt)}")
+                    Text("High: ${daily.temp?.max ?: 0}°C, Low: ${daily.temp?.min ?: 0}°C")
+                    Text("Weather: ${daily.weather?.firstOrNull()?.description ?: "N/A"}")
+                }
+            }
+        }
+
     }
 }
 

@@ -86,4 +86,8 @@ dependencies {
     implementation(libs.logging.interceptor)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    /* Assignment 4 */
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.navigation.compose)
 }
