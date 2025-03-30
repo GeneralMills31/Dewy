@@ -1,21 +1,17 @@
 package com.example.dewy
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+
 
 @Composable
-fun ForecastScreen(viewModel: WeatherViewModel = viewModel(), zip: String = "55101") {
+fun ForecastScreen(viewModel: WeatherViewModel = viewModel(), zip: String = "55101", navController: NavController) {
     LaunchedEffect(zip) {
         viewModel.fetchForecast(zip)
     }
@@ -36,5 +32,14 @@ fun ForecastScreen(viewModel: WeatherViewModel = viewModel(), zip: String = "551
             Text("Description: ${daily.weather.firstOrNull()?.description ?: "N/A"}")
             Spacer(modifier = Modifier.height(12.dp))
         } ?: Text("Loading forecast...")
+
+        // Put back button here!
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(onClick = { navController.popBackStack() }) {
+            Text("Back to Current Weather")
+        }
+
     }
 }

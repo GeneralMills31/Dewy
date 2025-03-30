@@ -29,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -127,7 +126,7 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("forecast/{zip}") { backStackEntry ->
                         val zip = backStackEntry.arguments?.getString("zip") ?: "55021"
-                        ForecastScreen(zip = zip)
+                        ForecastScreen(zip = zip, navController = navController)
                     }
                 }
             }
@@ -140,9 +139,12 @@ class MainActivity : ComponentActivity() {
 fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavHostController) {
     /* Observes weather data | Updates UI when LiveData changes. */
     val weatherData by viewModel.weatherData.observeAsState()
-//    val context = LocalContext.current
-    /* ASSIGNMENT 4 */
     var zipCode by remember { mutableStateOf("55101") }
+
+    // Fetch default weather (Saint Paul MN) at startup!
+    LaunchedEffect(Unit) {
+        viewModel.fetchWeather(zipCode)
+    }
 
     Column(
         modifier = Modifier
@@ -173,12 +175,13 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "${data.main.temp}°F",
-                        style = MaterialTheme.typography.displayMedium.copy(fontSize = 80.sp)
+                        style = MaterialTheme.typography.displayMedium.copy(fontSize = 60.sp)
                     )
                     Spacer(modifier = Modifier.size(4.dp))
                     Text("Feels like: ${data.main.feelsLike}°F")
@@ -212,53 +215,40 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 Text("Description: ${data.weather.firstOrNull()?.description ?: "N/A"}")
                 Text("Sunrise: ${convertUnixToTime(data.sys.sunrise)}")
                 Text("Sunset: ${convertUnixToTime(data.sys.sunset)}")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // ZIP Field
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                TextField(
-                    value = zipCode,
-                    onValueChange = { zipCode = it },
-                    label = { Text("ZIP Code") }
-                )
-            }
-
-            // Get Weather Button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(onClick = {
-                    viewModel.fetchWeather(zipCode)
-                }) {
-                    Text("Get Weather")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Button(onClick = {
-                    navController.navigate("forecast/$zipCode")
-                }) {
-                    Text("View Forecast")
-                }
             } ?: Text(
-                text = "No Weather Data Loaded",
-                modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.bodyLarge
+                text = "No Weather Data Loaded.",
+                modifier = Modifier.padding(16.dp)
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            TextField(
+                value = zipCode,
+                onValueChange = { zipCode = it },
+                label = { Text("Enter ZIP Code") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { viewModel.fetchWeather(zipCode) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Get Weather")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { navController.navigate("forecast/$zipCode") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("View Forecast")
+            }
+
         }
     }
 }
