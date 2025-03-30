@@ -21,10 +21,11 @@ interface WeatherApi {
     ): WeatherData
 
     /* ASSIGNMENT 4 */
-    @GET("forecast/daily?")
+    @GET("forecast/daily")
     suspend fun getForecast(
         @Query("zip") zip: String,
         @Query("appid") apiKey: String,
         @Query("units") units: String = "imperial",
+        @Query("cnt") days: Int = 16
     ): ForecastData
 }

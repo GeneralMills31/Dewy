@@ -34,6 +34,7 @@ fun ForecastScreen(viewModel: WeatherViewModel = viewModel(), zip: String = "551
         } ?: Text("Loading forecast...")
 
         // Put back button here!
+        Text("Days Loaded: ${forecastData?.list?.size ?: 0}")
 
         Spacer(modifier = Modifier.height(24.dp))
 
