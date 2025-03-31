@@ -193,8 +193,9 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val icon = getLocalIcon(weatherData?.weather?.firstOrNull()?.icon)
                     Image(
-                        painter = painterResource(id = R.drawable.sunny),
+                        painter = painterResource(icon),
                         contentDescription = "Weather Icon",
                         modifier = Modifier.size(60.dp)
                     )
