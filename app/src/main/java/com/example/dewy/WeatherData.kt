@@ -17,7 +17,8 @@ data class WeatherData(
     @SerialName("main") val main: Main,
     @SerialName("weather") val weather: List<WeatherCondition>,
     @SerialName("wind") val wind: Wind,
-    @SerialName("sys") val sys: Sys
+    @SerialName("sys") val sys: Sys,
+    @SerialName("name") val name: String
 )
 
 @Serializable

@@ -5,37 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -105,6 +76,26 @@ JSON data is returned and converted to Kotlin data. Upon return to the ViewModel
 LiveData (_weatherData) is updated with the new data and the UI changes as a result.
 */
 
+/*
+General to Finish!
+- Add back user input for ZIP code.
+- Display correct city name (based on returned weatherData).
+- Check for Strings (must be externalized).
+- Make sure data is all still displayed (not less than previous assignments).
+- ERROR handling for incorrect ZIP data!!!
+
+Need to finish UI!
+- Have the days labeled for each individual card.
+- Get icon for each card (not just one and applied to all of them).
+- Place temp to the left of screen and description next to it as well.
+
+Customize Forecast screen!
+- Needs Lazy row/column (MUST be Lazy).
+- Needs to be a vertical list.
+- Day names/labels.
+- Colored screen.
+ */
+
 /* API Key */
 const val API_KEY = BuildConfig.OPENWEATHER_API_KEY
 
@@ -130,126 +121,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
-    }
-}
-
-/* Composable function to display the weather data and start data fetching. */
-@Composable
-fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavHostController) {
-    /* Observes weather data | Updates UI when LiveData changes. */
-    val weatherData by viewModel.weatherData.observeAsState()
-    var zipCode by remember { mutableStateOf("55101") }
-
-    // Fetch default weather (Saint Paul MN) at startup!
-    LaunchedEffect(Unit) {
-        viewModel.fetchWeather(zipCode)
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 48.dp)
-    ) {
-        // HEADER
-        Row(
-            modifier = Modifier
-                .background(Color.LightGray)
-                .fillMaxWidth()
-                .padding(vertical = 10.dp, horizontal = 14.dp)
-        ) {
-            Text(
-                text = stringResource(id = R.string.app_name),
-                style = MaterialTheme.typography.headlineSmall
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        weatherData?.let { data ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "${data.main.temp}°F",
-                        style = MaterialTheme.typography.displayMedium.copy(fontSize = 60.sp)
-                    )
-                    Spacer(modifier = Modifier.size(4.dp))
-                    Text("Feels like: ${data.main.feelsLike}°F")
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    val icon = getLocalIcon(weatherData?.weather?.firstOrNull()?.icon)
-                    Image(
-                        painter = painterResource(icon),
-                        contentDescription = "Weather Icon",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Extra Details
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
-            ) {
-                Text("Humidity: ${data.main.humidity}%")
-                Text("High: ${data.main.tempMax}°F")
-                Text("Low: ${data.main.tempMin}°F")
-                Text("Description: ${data.weather.firstOrNull()?.description ?: "N/A"}")
-                Text("Sunrise: ${convertUnixToTime(data.sys.sunrise)}")
-                Text("Sunset: ${convertUnixToTime(data.sys.sunset)}")
-            } ?: Text(
-                text = "No Weather Data Loaded.",
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            TextField(
-                value = zipCode,
-                onValueChange = { zipCode = it },
-                label = { Text("Enter ZIP Code") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { viewModel.fetchWeather(zipCode) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Get Weather")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { navController.navigate("forecast/$zipCode") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("View Forecast")
-            }
-
         }
     }
 }
