@@ -78,22 +78,22 @@ LiveData (_weatherData) is updated with the new data and the UI changes as a res
 
 /*
 General to Finish!
-- Add back user input for ZIP code.
-- Display correct city name (based on returned weatherData).
+X Add back user input for ZIP code.
+X Display correct city name (based on returned weatherData).
 - Check for Strings (must be externalized).
 - Make sure data is all still displayed (not less than previous assignments).
 - ERROR handling for incorrect ZIP data!!!
 
 Need to finish UI!
-- Have the days labeled for each individual card.
-- Get icon for each card (not just one and applied to all of them).
-- Place temp to the left of screen and description next to it as well.
+X Have the days labeled for each individual card.
+X Get icon for each card (not just one and applied to all of them).
+X Place temp to the left of screen and description next to it as well.
 
 Customize Forecast screen!
-- Needs Lazy row/column (MUST be Lazy).
-- Needs to be a vertical list.
-- Day names/labels.
-- Colored screen.
+X Needs Lazy row/column (MUST be Lazy).
+X Needs to be a vertical list.
+X Day names/labels.
+X Colored screen.
  */
 
 /* API Key */

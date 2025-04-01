@@ -26,3 +26,15 @@ fun getLocalIcon(iconCode: String?): Int {
         else -> R.drawable.unknown
     }
 }
+
+/*
+Function to get the day of the week for a specific day. Primarily used for the LazyRow cards
+in WeatherScreen.
+ */
+fun getDayOfWeek(unixTime: Long): String {
+    // Convert seconds to milliseconds
+    val date = Date(unixTime * 1000)
+    // 'EEE' for Mon, Tue, etc. 'EEEE" for Monday, Tuesday, etc.
+    val format = SimpleDateFormat("EEE", Locale.getDefault())
+    return format.format(date)
+}
