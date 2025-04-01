@@ -32,9 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +40,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 
 @Composable
-// Make a card for the day that is passed through.
+/* Make a card for the day that is passed through. This is used for the WeatherScreens
+* LazyRow. */
 fun ForecastCardRow(daily: DailyForecast) {
     val icon = getLocalIcon(daily.weather?.firstOrNull()?.icon)
     val day = getDayOfWeek(daily.dt)
@@ -73,24 +72,28 @@ fun ForecastCardRow(daily: DailyForecast) {
 fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavHostController) {
     /* Observes weather data | Updates UI when LiveData changes. */
     val weatherData by viewModel.weatherData.observeAsState()
-    /* UI Work */
     val forecastData by viewModel.forecastData.observeAsState()
-    // Don't remove the 'us' or else it will default to the Ukraine.
-    var zipCode by remember { mutableStateOf("55101,us") }
-    val context = LocalContext.current
+    var zipCode by remember { mutableStateOf("55021") }
+    /* Used for ZIP errors */
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var hasAttemptedFetch by remember { mutableStateOf(false) }
 
-    // Fetch default weather (Saint Paul MN) at startup!
+
+    /* Launch on startup and with default location (Faribault, MN) */
     LaunchedEffect(Unit) {
         viewModel.fetchWeather(zipCode)
         viewModel.fetchForecast(zipCode)
     }
 
+    /* Box to hold and organize WeathScreen data */
     Box(
         modifier = Modifier
             .fillMaxSize()
+            /* Helps automate the padding for certain areas (such as the notification and navigation bars). */
             .padding(WindowInsets.systemBars.asPaddingValues())
             .background(Color(0xFF9ECFFF))
     ) {
+        /* Main Column for the WeatherScreens data */
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -99,7 +102,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // City Name
+            /* Where the city name is handled and displayed. */
             Text(
                 text = weatherData?.name.toString(),
                 style = MaterialTheme.typography.titleLarge,
@@ -108,7 +111,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Icon
+            /* UPDATE this area to utilize -> weatherData?.let { ... }
+            * Will only run this area if WeatherData is NOT null. */
+
+            /* Where the icon is handled and displayed. Utilizes a function to map a locally stored
+            * icon to the icon code from the API response. */
             val icon = getLocalIcon(weatherData?.weather?.firstOrNull()?.icon)
             Image(
                 painter = painterResource(icon),
@@ -118,33 +125,42 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Row for Temp, Desc, and H/L.
-            Row(modifier = Modifier
+            /* Row for handling and displaying the main temperature, description,
+            * min, max, humidity, pressure, wind speed, gust, country, sunrise, and sunset. */
+            Row(
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 10.dp, horizontal = 14.dp),
                 Arrangement.Start
-                ) {
-                // Main Temp
+            ) {
+
+                /* Clears the error message if weatherData is NOT null. */
+                if (weatherData != null) {
+                    errorMessage = null
+                }
+
+                /* Main Temp */
                 Text(
                     text = "${weatherData?.main?.temp?.toInt() ?: "--"}°",
                     style = MaterialTheme.typography.displayLarge.copy(fontSize = 80.sp),
                     color = Color.White
                 )
 
+                /* Sub-column for managing key data (description and high/low values) */
                 Column(
                     modifier = Modifier
                         .padding(vertical = 42.dp, horizontal = 18.dp),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Bottom
                 ) {
-                    // Description
+                    /* Description */
                     Text(
                         text = weatherData?.weather?.firstOrNull()?.description?.replaceFirstChar { it.uppercase() }
                             ?: "Loading...",
                         color = Color.White,
                         style = MaterialTheme.typography.bodyLarge
                     )
-                    // High and Low
+                    /* High and Low */
                     Text(
                         text = "H: ${weatherData?.main?.tempMax?.toInt() ?: "--"}° L: ${weatherData?.main?.tempMin?.toInt() ?: "--"}°",
                         color = Color.White,
@@ -152,6 +168,8 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                     )
                 }
 
+                /* Additional sub-column for secondary information (humidity, pressure,
+                * wind speed, gust, etc.). */
                 Column(
                     modifier = Modifier
                         .padding(vertical = 6.dp, horizontal = 6.dp)
@@ -206,7 +224,9 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Horizontal LazyRow where each element is a card returned by ForecastCardLocal
+            /* Code here takes five of the days returned from the forecast API response
+            * and creates a card for them (utilizing ForecastCardRow()) and then adds each of
+            * them to a LazyRow. */
             forecastData?.list?.take(5)?.let { forecastList ->
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(forecastList) { daily ->
@@ -217,18 +237,56 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Get weather button
+            /* Error handling reminder:
+            * Initially LaunchedEffect will trigger and load data for the ZIP 55021 (Faribault).
+            * weatherData and forecastData will be setup and observed at this time as well. */
+
+            /* This part of the code will check to see if we tried to fetch data with a valid ZIP but
+            * also if weatherData is still null. If this is the case, it sets an error message. */
+            if (weatherData == null && zipCode.length == 5 && hasAttemptedFetch) {
+                if (errorMessage == null) {
+                    errorMessage = "There was a problem fetching weather data. Please check entered ZIP code."
+                }
+            }
+
+            /* This TextField manages the user input. It only allows for five digit inputs. */
             TextField(
                 value = zipCode,
-                onValueChange = { zipCode = it },
+                onValueChange = {
+                    /* Must be '<=' or else the it causes input errors. */
+                    if (it.length <= 5 && it.all { char -> char.isDigit() }) {
+                        zipCode = it
+                    }
+                },
                 label = { Text("Enter ZIP Code") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = errorMessage != null
             )
+
+            /* This if statement makes the error message appear in red below the ZIP input
+            * field (if it is not null). */
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { viewModel.fetchWeather(zipCode) },
+                onClick = {
+                    hasAttemptedFetch = true
+                    if (zipCode.length == 5) {
+                        viewModel.fetchWeather(zipCode)
+                        viewModel.fetchForecast(zipCode)
+                        errorMessage = null
+                    } else {
+                        errorMessage = "ZIP code must be 5 digits in length."
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Get Weather")

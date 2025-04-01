@@ -18,15 +18,16 @@ class WeatherViewModel : ViewModel() {
     /* ASSIGNMENT 4 */
     val forecastData: LiveData<ForecastData?> = _forecastData
 
-    fun fetchWeather(city: String) {
+    fun fetchWeather(zip: String) {
         /* Means network call is run asynchronously. */
+        val formattedZip = "$zip,us"
         viewModelScope.launch {
             try {
                 /*
                 Debugging
                 Log.d("WeatherDebug", "API Key: $API_KEY")
                 */
-                val response = RetrofitClient.instance.getWeather(city, API_KEY)
+                val response = RetrofitClient.instance.getWeather(formattedZip, API_KEY)
                 /*
                 Debugging
                 Log.d("WeatherDebug", "API Response: $response")
@@ -51,10 +52,11 @@ class WeatherViewModel : ViewModel() {
 
     /* ASSIGNMENT 4 */
     fun fetchForecast(zip: String) {
+        val formattedZip = "$zip,us"
         viewModelScope.launch {
             try {
                 Log.d("WeatherViewModel", "Fetching forecast for $zip with API key $API_KEY")
-                val response = RetrofitClient.instance.getForecast(zip, API_KEY)
+                val response = RetrofitClient.instance.getForecast(formattedZip, API_KEY)
                 Log.d("WeatherViewModel", "Forecast API Response: $response")
                 _forecastData.postValue(response)
             } catch (e : retrofit2.HttpException) {
