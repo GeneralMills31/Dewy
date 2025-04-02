@@ -76,14 +76,6 @@ JSON data is returned and converted to Kotlin data. Upon return to the ViewModel
 LiveData (_weatherData) is updated with the new data and the UI changes as a result.
 */
 
-/*
-General to Finish!
-- Check for Strings (must be externalized).
-- Finish ERROR handling for incorrect ZIP data!!! It currently does not respond for some valid zip entries
-  EX: 11111
-- Finish commenting.
-*/
-
 /* API Key */
 const val API_KEY = BuildConfig.OPENWEATHER_API_KEY
 
