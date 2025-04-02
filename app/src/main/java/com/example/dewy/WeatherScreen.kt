@@ -263,12 +263,10 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
             TextField(
                 value = zipCode,
                 onValueChange = {
-                    /* Must be '<=' or else the it causes input errors. */
-                    if (it.length <= 5 && it.all { char -> char.isDigit() }) {
-                        zipCode = it
-                    }
+                    zipCode = it
                 },
                 label = { Text("Enter ZIP Code") },
+                isError = errorMessage != null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
             )
