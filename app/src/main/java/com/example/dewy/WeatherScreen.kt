@@ -71,19 +71,6 @@ fun ForecastCardRow(daily: DailyForecast) {
     }
 }
 
-/*
-General to Finish!
-- Check for Strings (must be externalized).
-- Finish ERROR handling for incorrect ZIP data!!! It currently does not respond for some valid zip entries
-  EX: 11111
-- Finish commenting.
-
-Just get it to handle bad inputs first. That is it. Only 5 and only digits. Anything else, displays
-a warning/red line. That should be simple enough. For handling a bad request... We'll have to see.
-Tackle that after!
-
-*/
-
 /* Composable function to display the weather data and start data fetching. */
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavHostController) {

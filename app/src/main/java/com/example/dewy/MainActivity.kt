@@ -65,23 +65,12 @@ import com.example.dewy.ui.theme.DewyTheme
  *  .....Continue here.....
  *
  */
-/*
-Application Behavior:
-1) MainActivity launches and calls WeatherScreen().
-2A) WeatherScreen initializes the ViewModel, LiveData, and gets the data. LiveData and UI update as a result.
-2B) WeatherScreen launches. LiveData and ViewModel are created. LaunchEffect is then triggered which tells the ViewModel to
-fetch the data. The Viewmodel calls its fetchWeather() function which utilizes the Retrofit client to make the OpenWeatherMap
-API data request. The Retrofit client uses WeatherAPI to define how it gets the data.
-JSON data is returned and converted to Kotlin data. Upon return to the ViewModel, if successful,
-LiveData (_weatherData) is updated with the new data and the UI changes as a result.
-*/
 
 /* API Key */
 const val API_KEY = BuildConfig.OPENWEATHER_API_KEY
 
 /* MainActivity where the UI is set. */
 class MainActivity : ComponentActivity() {
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         /* Extend UI to edges of screen. */
