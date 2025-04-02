@@ -120,135 +120,130 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            /* Clears the error message if weatherData is NOT null. */
-            if (weatherData != null) {
-                errorMessage = null
+            /* Where the city name is handled and displayed. */
+            Text(
+                text = weatherData?.name.toString(),
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White
+            )
 
-                /* Where the city name is handled and displayed. */
+            Spacer(modifier = Modifier.height(24.dp))
+
+            /* UPDATE this area to utilize -> weatherData?.let { ... }
+            * Will only run this area if WeatherData is NOT null. */
+
+            /* Where the icon is handled and displayed. Utilizes a function to map a locally stored
+            * icon to the icon code from the API response. */
+            val icon = getLocalIcon(weatherData?.weather?.firstOrNull()?.icon)
+            Image(
+                painter = painterResource(icon),
+                contentDescription = "Weather Icon",
+                modifier = Modifier.size(200.dp),
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            /* Row for handling and displaying the main temperature, description,
+            * min, max, humidity, pressure, wind speed, gust, country, sunrise, and sunset. */
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp, horizontal = 14.dp),
+                Arrangement.Start
+            ) {
+
+                /* Main Temp */
                 Text(
-                    text = weatherData?.name.toString(),
-                    style = MaterialTheme.typography.titleLarge,
+                    text = "${weatherData?.main?.temp?.toInt() ?: "--"}°",
+                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 80.sp),
                     color = Color.White
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                /* UPDATE this area to utilize -> weatherData?.let { ... }
-                * Will only run this area if WeatherData is NOT null. */
-
-                /* Where the icon is handled and displayed. Utilizes a function to map a locally stored
-                * icon to the icon code from the API response. */
-                val icon = getLocalIcon(weatherData?.weather?.firstOrNull()?.icon)
-                Image(
-                    painter = painterResource(icon),
-                    contentDescription = "Weather Icon",
-                    modifier = Modifier.size(200.dp),
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                /* Row for handling and displaying the main temperature, description,
-                * min, max, humidity, pressure, wind speed, gust, country, sunrise, and sunset. */
-                Row(
+                /* Sub-column for managing key data (description and high/low values) */
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp, horizontal = 14.dp),
-                    Arrangement.Start
+                        .padding(vertical = 42.dp, horizontal = 18.dp),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.Bottom
                 ) {
-
-                    /* Main Temp */
+                    /* Description */
                     Text(
-                        text = "${weatherData?.main?.temp?.toInt() ?: "--"}°",
-                        style = MaterialTheme.typography.displayLarge.copy(fontSize = 80.sp),
-                        color = Color.White
+                        text = weatherData?.weather?.firstOrNull()?.description?.replaceFirstChar { it.uppercase() }
+                            ?: "Loading...",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyLarge
                     )
-
-                    /* Sub-column for managing key data (description and high/low values) */
-                    Column(
-                        modifier = Modifier
-                            .padding(vertical = 42.dp, horizontal = 18.dp),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Bottom
-                    ) {
-                        /* Description */
-                        Text(
-                            text = weatherData?.weather?.firstOrNull()?.description?.replaceFirstChar { it.uppercase() }
-                                ?: "Loading...",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        /* High and Low */
-                        Text(
-                            text = "H: ${weatherData?.main?.tempMax?.toInt() ?: "--"}° L: ${weatherData?.main?.tempMin?.toInt() ?: "--"}°",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    /* Additional sub-column for secondary information (humidity, pressure,
-                    * wind speed, gust, etc.). */
-                    Column(
-                        modifier = Modifier
-                            .padding(vertical = 6.dp, horizontal = 6.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Bottom
-                    ) {
-                        // Humidity
-                        Text(
-                            text = "RH: ${weatherData?.main?.humidity ?: "--"}%",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        // Pressure
-                        Text(
-                            text = "hPa: ${weatherData?.main?.pressure ?: "--"}",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        // Wind Speed
-                        Text(
-                            text = "Wind: ${weatherData?.wind?.speed ?: "--"}MPH",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        // Gust
-                        Text(
-                            text = "Gust: ${weatherData?.wind?.gust ?: "--"}MPH",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        // Country
-                        Text(
-                            text = "Country: ${weatherData?.sys?.country ?: "--"}",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        // Sunrise
-                        Text(
-                            text = "Sunrise: ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) } ?: "--"}",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        // Sunset
-                        Text(
-                            text = "Sunset: ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) } ?: "--"}",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
+                    /* High and Low */
+                    Text(
+                        text = "H: ${weatherData?.main?.tempMax?.toInt() ?: "--"}° L: ${weatherData?.main?.tempMin?.toInt() ?: "--"}°",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                /* Additional sub-column for secondary information (humidity, pressure,
+                * wind speed, gust, etc.). */
+                Column(
+                    modifier = Modifier
+                        .padding(vertical = 6.dp, horizontal = 6.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    // Humidity
+                    Text(
+                        text = "RH: ${weatherData?.main?.humidity ?: "--"}%",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Pressure
+                    Text(
+                        text = "hPa: ${weatherData?.main?.pressure ?: "--"}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Wind Speed
+                    Text(
+                        text = "Wind: ${weatherData?.wind?.speed ?: "--"}MPH",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Gust
+                    Text(
+                        text = "Gust: ${weatherData?.wind?.gust ?: "--"}MPH",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Country
+                    Text(
+                        text = "Country: ${weatherData?.sys?.country ?: "--"}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Sunrise
+                    Text(
+                        text = "Sunrise: ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) } ?: "--"}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Sunset
+                    Text(
+                        text = "Sunset: ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) } ?: "--"}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
 
-                /* Code here takes five of the days returned from the forecast API response
-                * and creates a card for them (utilizing ForecastCardRow()) and then adds each of
-                * them to a LazyRow. */
-                forecastData?.list?.take(5)?.let { forecastList ->
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(forecastList) { daily ->
-                            ForecastCardRow(daily)
-                        }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            /* Code here takes five of the days returned from the forecast API response
+            * and creates a card for them (utilizing ForecastCardRow()) and then adds each of
+            * them to a LazyRow. */
+            forecastData?.list?.take(5)?.let { forecastList ->
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(forecastList) { daily ->
+                        ForecastCardRow(daily)
                     }
                 }
             }
@@ -288,10 +283,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                     if (zipCode.length == 5 && zipCode.all {it.isDigit() }) {
                         coroutineScope.launch {
                             val success = viewModel.fetchWeather(zipCode)
-                            errorMessage = if (!success) {
-                                "Problem loading weather data. Check your ZIP code."
+                            viewModel.fetchForecast(zipCode)
+                            if (!success) {
+                                errorMessage = "Problem loading weather data. Check your ZIP code."
                             } else {
-                                null
+                                errorMessage = null
                             }
                         }
                     } else {

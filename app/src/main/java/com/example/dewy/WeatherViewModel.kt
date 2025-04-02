@@ -21,22 +21,20 @@ class WeatherViewModel : ViewModel() {
     suspend fun fetchWeather(zip: String): Boolean {
         val formattedZip = "$zip,us"
         return try {
-            /*
-            Debugging
-            Log.d("WeatherDebug", "API Key: $API_KEY")
-            */
             val response = RetrofitClient.instance.getWeather(formattedZip, API_KEY)
-            Log.d("WeatherDebug", "API Response: $response")
-            /* Updates weather data with data received from OpenWeatherMap API request. */
-            _weatherData.postValue(response)
-            true
+            // Log.d("WeatherDebug", "API Response: $response")
+            if (response != null) {
+                _weatherData.postValue(response)
+                true
+            } else {
+                false
+            }
         } catch (e: Exception) {
             /*
             Debugging
             Log.d("WeatherDebug", "General Exception: ${e.message}")
             */
             /* If error, set _weatherData to null. */
-            _weatherData.postValue(null)
             false
         }
     }
