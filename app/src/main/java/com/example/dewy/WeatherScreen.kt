@@ -266,7 +266,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             errorMessage?.let {
                 Text(
@@ -276,18 +276,18 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = {
                     if (zipCode.length == 5 && zipCode.all {it.isDigit() }) {
                         coroutineScope.launch {
                             val success = viewModel.fetchWeather(zipCode)
-                            viewModel.fetchForecast(zipCode)
                             if (!success) {
                                 errorMessage = "Problem loading weather data. Check your ZIP code."
                             } else {
                                 errorMessage = null
+                                viewModel.fetchForecast(zipCode)
                             }
                         }
                     } else {
