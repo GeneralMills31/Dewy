@@ -1,54 +1,16 @@
 package com.example.dewy
-
 /* Imports | Ctrl + Alt + O to optimize imports. */
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.dewy.ui.theme.DewyTheme
-import kotlinx.coroutines.launch
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Query
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /*  GENERAL NOTES AND REFERENCES:
  *  Icon Set = Kawaii Flat
@@ -100,249 +62,48 @@ import java.util.Locale
  *         val temp = weatherData?.main?.temp ?: "N/A"
  *         Explanation: '?: "N/A"' = If null, display N/A
  *
+ *  _weatherData: Mutable! utilized by ViewModel. Internal.
+ *  weatherData: Read-only. Used in the UI. External.
+ * weatherData will follow/change with _weatherData but it cannot be changed or altered (read-only).
+ *
  *  .....Continue here.....
  *
  */
 
 /*
-Application Behavior:
-1) MainActivity launches and calls WeatherScreen().
-2A) WeatherScreen initializes the ViewModel, LiveData, and gets the data. LiveData and UI update as a result.
-2B) WeatherScreen launches. LiveData and ViewModel are created. LaunchEffect is then triggered which tells the ViewModel to
-fetch the data. The Viewmodel calls its fetchWeather() function which utilizes the Retrofit client to make the OpenWeatherMap
-API data request. The Retrofit client uses WeatherAPI to define how it gets the data.
-JSON data is returned and converted to Kotlin data. Upon return to the ViewModel, if successful,
-LiveData (_weatherData) is updated with the new data and the UI changes as a result.
+* TO DO:
+* - Externalize all strings and/or define constants for specific values.
+* - Clean up additional weather data column (make it a card with a LazyColumn)?
+* - Fix ForecastScreen (will refresh/re-run when an inapplicable ZIP is entered).
 */
 
 /* API Key */
 const val API_KEY = BuildConfig.OPENWEATHER_API_KEY
 
-/*
-Data classes to fit JSON response.
-They all hold relevant conditions data.
-Retrofit will automatically convert the response into these objects!
-@Serializable enables Kotlin serialization so Retrofit can convert JSON into this object.
-*/
-
-/* Main API response object. */
-@Serializable
-data class WeatherData(
-    /* Maps these attributes to JSON fields. */
-    @SerialName("main") val main: Main,
-    @SerialName("weather") val weather: List<WeatherCondition>,
-    @SerialName("wind") val wind: Wind,
-    @SerialName("sys") val sys: Sys
-)
-
-@Serializable
-data class Main(
-    val temp: Double,
-    @SerialName("feels_like") val feelsLike: Double,
-    @SerialName("temp_min") val tempMin: Double,
-    @SerialName("temp_max") val tempMax: Double,
-    val humidity: Int,
-    val pressure: Int
-)
-
-@Serializable
-data class WeatherCondition(
-    val description: String,
-    val icon: String
-)
-
-@Serializable
-data class Wind(
-    val speed: Double,
-    val deg: Int,
-    val gust: Double
-)
-
-@Serializable
-data class Sys(
-    val country: String,
-    val sunrise: Long,
-    val sunset: Long
-)
-
-/*
-Get weather data from OpenWeatherMap using Retrofit.
-Defines how Retrofit fetches the data.
-*/
-interface WeatherApi {
-    /* GET request to OpenWeatherMaps /weather endpoint. */
-    @GET("weather")
-    /* Returns a WeatherData object. */
-    suspend fun getWeather(
-        /* The city name we are using. */
-        @Query("q") city: String,
-        /* API Key */
-        @Query("appid") apiKey: String,
-        /* Get temperature data in Fahrenheit. */
-        @Query("units") units: String = "imperial"
-    ): WeatherData
-}
-
-/* Creates an instance (singleton) of Retrofit. */
-object RetrofitClient {
-    /* Root URL for all API requests. */
-    private const val BASE_URL = "https://api.openweathermap.org/data/2.5/"
-
-    /* Initialize Retrofit only when accessed (by lazy). */
-    val instance: WeatherApi by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            /* Converts JSON responses into Kotlin objects. */
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(WeatherApi::class.java)
-    }
-}
-
-/* Fetch data (manages API requests) and store results in LiveData. */
-class WeatherViewModel : ViewModel() {
-    /* Hold API response. */
-    private val _weatherData = MutableLiveData<WeatherData?>()
-    /* UI will observe this to update data. */
-    val weatherData: LiveData<WeatherData?> = _weatherData
-
-    fun fetchWeather(city: String) {
-        /* Means network call is run asynchronously. */
-        viewModelScope.launch {
-            try {
-                /*
-                Debugging
-                Log.d("WeatherDebug", "API Key: $API_KEY")
-                */
-                val response = RetrofitClient.instance.getWeather(city, API_KEY)
-                /*
-                Debugging
-                Log.d("WeatherDebug", "API Response: $response")
-                */
-                /* Updates weather data with data received from OpenWeatherMap API request. */
-                _weatherData.postValue(response)
-            } catch (e: retrofit2.HttpException) {
-                /*
-                Debugging
-                Log.d("WeatherDebug", "HTTP Exception: ${e.code()} - ${e.message()}")
-                */
-            } catch (e: Exception) {
-                /*
-                Debugging
-                Log.d("WeatherDebug", "General Exception: ${e.message}")
-                */
-                /* If error, set _weatherData to null. */
-                _weatherData.postValue(null)
-            }
-        }
-    }
-}
-
-/* MainActivity where the UI is set. */
+/* MainActivity where the UI is set/Entry point of the app.
+* ComponentActivity in the base class of JC apps. */
 class MainActivity : ComponentActivity() {
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         /* Extend UI to edges of screen. */
         enableEdgeToEdge()
-        /* Load WeatherScreen. */
+        /* Set/Load UI/WeatherScreen. */
         setContent {
+            /* Setup NavController */
+            val navController = rememberNavController()
+            /* Wrap UI in app theme */
             DewyTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { WeatherScreen() }
+                /* Define NavHost, controller to use, and starting screen */
+                NavHost(navController = navController, startDestination = "weather") {
+                    /* Setup main route and pass navController for navigation */
+                    composable("weather") { WeatherScreen(navController = navController) }
+                    /* Setup forecast route and pass navController */
+                    composable("forecast/{zip}") { backStackEntry ->
+                        val zip = backStackEntry.arguments?.getString("zip") ?: "55021"
+                        ForecastScreen(zip = zip, navController = navController)
+                    }
+                }
             }
-        }
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-
-/* Composable function to display the weather data and start data fetching. */
-@Composable
-fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
-    /* Observes weather data | Updates UI when LiveData changes. */
-    val weatherData by viewModel.weatherData.observeAsState()
-    /*
-    Placed here instead of inside LaunchedEffect as .current must be in a composable function.
-    Gets city name from strings.xml.
-    */
-    val context = LocalContext.current
-    val city = context.getString(R.string.city)
-
-    /* Function to convert the returned sunrise and sunset data into a readable time. */
-    fun convertUnixToTime(unixTime: Long): String {
-        val date = Date(unixTime * 1000) /* Convert seconds to milliseconds. */
-        val format = SimpleDateFormat("hh:mm a", Locale.getDefault()) /* Format as HH:MM AM/PM. */
-        return format.format(date)
-    }
-
-    /* Starts the fetchWeather() function when the application is launched. */
-    LaunchedEffect(Unit) {
-        viewModel.fetchWeather(city)
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 48.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .background(Color.LightGray)
-                .fillMaxWidth()
-                .padding(vertical = 10.dp, horizontal = 14.dp)
-        ) {
-            Text(text = stringResource(id = R.string.app_name), style = MaterialTheme.typography.headlineSmall)
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(text = stringResource(id = R.string.city), style = MaterialTheme.typography.headlineSmall)
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "${weatherData?.main?.temp?.toInt()}" + context.getString(R.string.degree_symbol_label),
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 80.sp)
-                )
-                Spacer(modifier = Modifier.size(4.dp))
-                Text(context.getString(R.string.feels_like_label) + " ${weatherData?.main?.temp?.toInt()}" + context.getString(R.string.degree_symbol_label))
-            }
-            Column(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.sunny),
-                    contentDescription = stringResource(id = R.string.weather_icon_desc),
-                    modifier = Modifier.size(60.dp)
-                )
-            }
-        }
-        /* Additional current conditions data. */
-        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 32.dp)) {
-            Text(context.getString(R.string.low_label) + " ${weatherData?.main?.tempMin?.toInt()}" + context.getString(R.string.degree_symbol_label))
-            Text(context.getString(R.string.high_label) + " ${weatherData?.main?.tempMax?.toInt()}" + context.getString(R.string.degree_symbol_label))
-            Text(context.getString(R.string.humidity_label) + " ${weatherData?.main?.humidity}" + context.getString(R.string.percent_label))
-            Text(context.getString(R.string.pressure_label)+ " ${weatherData?.main?.pressure}" + context.getString(R.string.hpa_label))
-            Text(context.getString(R.string.wind_label) + " ${weatherData?.wind?.speed?.toInt()}" + context.getString(R.string.mph_label))
-            Text(context.getString(R.string.degree_label)+ " ${weatherData?.wind?.deg}")
-            Text(context.getString(R.string.gust_label) + " ${weatherData?.wind?.gust?.toInt()}" + context.getString(R.string.mph_label))
-            Text(context.getString(R.string.desc_label) + " ${weatherData?.weather?.get(0)?.description}")
-            Text(context.getString(R.string.country_label)+ " ${weatherData?.sys?.country}")
-            Text(context.getString(R.string.sunrise_label) + " ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) }}")
-            Text(context.getString(R.string.sunset_label) + " ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) }}")
         }
     }
 }
@@ -350,7 +111,8 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
 @Preview(showBackground = true)
 @Composable
 fun WeatherPreview() {
+    val navController = rememberNavController()
     DewyTheme {
-        WeatherScreen()
+        WeatherScreen(navController = navController)
     }
 }
