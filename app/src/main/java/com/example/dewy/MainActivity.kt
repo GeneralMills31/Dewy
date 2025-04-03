@@ -62,26 +62,42 @@ import com.example.dewy.ui.theme.DewyTheme
  *         val temp = weatherData?.main?.temp ?: "N/A"
  *         Explanation: '?: "N/A"' = If null, display N/A
  *
+ *  _weatherData: Mutable! utilized by ViewModel. Internal.
+ *  weatherData: Read-only. Used in the UI. External.
+ * weatherData will follow/change with _weatherData but it cannot be changed or altered (read-only).
+ *
  *  .....Continue here.....
  *
  */
 
+/*
+* TO DO:
+* - Externalize all strings and/or define constants for specific values.
+* - Clean up additional weather data column (make it a card with a LazyColumn)?
+* - Fix ForecastScreen (will refresh/re-run when an inapplicable ZIP is entered).
+*/
+
 /* API Key */
 const val API_KEY = BuildConfig.OPENWEATHER_API_KEY
 
-/* MainActivity where the UI is set. */
+/* MainActivity where the UI is set/Entry point of the app.
+* ComponentActivity in the base class of JC apps. */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         /* Extend UI to edges of screen. */
         enableEdgeToEdge()
-        /* Load WeatherScreen. */
+        /* Set/Load UI/WeatherScreen. */
         setContent {
+            /* Setup NavController */
             val navController = rememberNavController()
+            /* Wrap UI in app theme */
             DewyTheme {
-                /* Setup Navigation */
-                NavHost(navController = navController, startDestination = "current") {
-                    composable("current") { WeatherScreen(navController = navController) }
+                /* Define NavHost, controller to use, and starting screen */
+                NavHost(navController = navController, startDestination = "weather") {
+                    /* Setup main route and pass navController for navigation */
+                    composable("weather") { WeatherScreen(navController = navController) }
+                    /* Setup forecast route and pass navController */
                     composable("forecast/{zip}") { backStackEntry ->
                         val zip = backStackEntry.arguments?.getString("zip") ?: "55021"
                         ForecastScreen(zip = zip, navController = navController)

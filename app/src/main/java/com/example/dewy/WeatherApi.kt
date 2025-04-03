@@ -8,7 +8,7 @@ Get weather data from OpenWeatherMap using Retrofit.
 Defines how Retrofit fetches the data.
 */
 interface WeatherApi {
-    /* GET request to OpenWeatherMaps /weather endpoint. */
+    /* GET request to OpenWeatherMaps weather endpoint. */
     @GET("weather")
     /* Returns a WeatherData object. */
     suspend fun getWeather(
@@ -20,12 +20,13 @@ interface WeatherApi {
         @Query("units") units: String = "imperial"
     ): WeatherData
 
-    /* ASSIGNMENT 4 */
+    /* GET request to OpenWeatherMaps forecast/daily endpoint. */
     @GET("forecast/daily")
     suspend fun getForecast(
         @Query("zip") zip: String,
         @Query("appid") apiKey: String,
         @Query("units") units: String = "imperial",
+        /* Number of days to retrieve/return */
         @Query("cnt") days: Int = 16
     ): ForecastData
 }

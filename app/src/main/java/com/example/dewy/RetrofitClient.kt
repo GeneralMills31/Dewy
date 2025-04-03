@@ -10,7 +10,6 @@ object RetrofitClient {
     /* Root URL for all API requests. */
     private const val BASE_URL = "https://api.openweathermap.org/data/2.5/"
 
-    /* ASSIGNMENT 4 */
     private val client = OkHttpClient.Builder()
         .addInterceptor { chain ->
             val request = chain.request()
@@ -25,7 +24,7 @@ object RetrofitClient {
     val instance: WeatherApi by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(client) /* ASSIGNMENT 4 */
+            .client(client)
             /* Converts JSON responses into Kotlin objects. */
             .addConverterFactory(GsonConverterFactory.create())
             .build()

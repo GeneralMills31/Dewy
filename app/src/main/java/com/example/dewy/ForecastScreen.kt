@@ -19,7 +19,7 @@ import androidx.navigation.NavController
 
 
 @Composable
-// Make a card for the day that is passed through.
+/* Make a simple card for the day that is passed through. This is used for the forecastScreen. */
 fun ForecastCardColumn(daily: DailyForecast) {
     val icon = getLocalIcon(daily.weather?.firstOrNull()?.icon)
     val day = getDayOfWeek(daily.dt)
@@ -49,6 +49,7 @@ fun ForecastCardColumn(daily: DailyForecast) {
 
 @Composable
 fun ForecastScreen(viewModel: WeatherViewModel = viewModel(), zip: String = "55101", navController: NavController) {
+
     LaunchedEffect(zip) {
         viewModel.fetchForecast(zip)
     }
@@ -73,7 +74,7 @@ fun ForecastScreen(viewModel: WeatherViewModel = viewModel(), zip: String = "551
             ) {
                 Text("Back to Current Weather")
             }
-            // Horizontal LazyRow where each element is a card returned by ForecastCardLocal
+            /* LazyColumn where each element is a card returned by ForecastCardLocal. */
             forecastData?.list?.let { forecastList ->
                 LazyColumn(modifier = Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
                     items(forecastList) { daily ->

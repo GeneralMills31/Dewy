@@ -44,7 +44,7 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 
 @Composable
-/* Make a card for the day that is passed through. This is used for the WeatherScreens
+/* Make a simple descriptive card for the day that is passed through. This is used for the WeatherScreens
 * LazyRow. */
 fun ForecastCardRow(daily: DailyForecast) {
     val icon = getLocalIcon(daily.weather?.firstOrNull()?.icon)
@@ -74,11 +74,11 @@ fun ForecastCardRow(daily: DailyForecast) {
 /* Composable function to display the weather data and start data fetching. */
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavHostController) {
-    /* Observes weather data | Updates UI when LiveData changes. */
+    /* Observe weather data | Update UI when LiveData changes. */
     val weatherData by viewModel.weatherData.observeAsState()
     val forecastData by viewModel.forecastData.observeAsState()
     var zipCode by remember { mutableStateOf("55021") }
-    /* For error handling */
+    /* Used for ZIP input validation. */
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -141,7 +141,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
                 /* Main Temp */
                 Text(
-                    text = "${weatherData?.main?.temp?.toInt() ?: "--"}°",
+                    text = "${weatherData?.main?.temp?.toInt() ?: "N/A"}°",
                     style = MaterialTheme.typography.displayLarge.copy(fontSize = 80.sp),
                     color = Color.White
                 )
@@ -156,13 +156,13 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                     /* Description */
                     Text(
                         text = weatherData?.weather?.firstOrNull()?.description?.replaceFirstChar { it.uppercase() }
-                            ?: "Loading...",
+                            ?: "N/A",
                         color = Color.White,
                         style = MaterialTheme.typography.bodyLarge
                     )
                     /* High and Low */
                     Text(
-                        text = "H: ${weatherData?.main?.tempMax?.toInt() ?: "--"}° L: ${weatherData?.main?.tempMin?.toInt() ?: "--"}°",
+                        text = "H: ${weatherData?.main?.tempMax?.toInt() ?: "N/A"}° L: ${weatherData?.main?.tempMin?.toInt() ?: "N/A"}°",
                         color = Color.White,
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -179,43 +179,43 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 ) {
                     // Humidity
                     Text(
-                        text = "RH: ${weatherData?.main?.humidity ?: "--"}%",
+                        text = "RH: ${weatherData?.main?.humidity ?: "N/A"}%",
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
                     // Pressure
                     Text(
-                        text = "hPa: ${weatherData?.main?.pressure ?: "--"}",
+                        text = "hPa: ${weatherData?.main?.pressure ?: "N/A"}",
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
                     // Wind Speed
                     Text(
-                        text = "Wind: ${weatherData?.wind?.speed ?: "--"}MPH",
+                        text = "Wind: ${weatherData?.wind?.speed ?: "N/A"}MPH",
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
                     // Gust
                     Text(
-                        text = "Gust: ${weatherData?.wind?.gust ?: "--"}MPH",
+                        text = "Gust: ${weatherData?.wind?.gust ?: "N/A"}MPH",
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
                     // Country
                     Text(
-                        text = "Country: ${weatherData?.sys?.country ?: "--"}",
+                        text = "Country: ${weatherData?.sys?.country ?: "N/A"}",
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
                     // Sunrise
                     Text(
-                        text = "Sunrise: ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) } ?: "--"}",
+                        text = "Sunrise: ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) } ?: "N/A"}",
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
                     // Sunset
                     Text(
-                        text = "Sunset: ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) } ?: "--"}",
+                        text = "Sunset: ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) } ?: "N/A"}",
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -239,9 +239,15 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             /* Error handling reminder:
             * Initially LaunchedEffect will trigger and load data for the ZIP 55021 (Faribault).
-            * weatherData and forecastData will be setup and observed at this time as well. */
+            * weatherData and forecastData will be setup and observed at this time as well.
+            * Essentially, the button does input validation (length = 5 & only digits). Then
+            * WeatherViewModels fetchWeather function checks for and handles null values
+            * (if ZIP entered is valid but doesn't exist/isn't applicable.) and will return
+            * a boolean value based on the functions success. The button will then respond based
+            * on this boolean (display an error message or not). */
 
-            /* This TextField manages the user input. It only allows for five digit inputs. */
+            /* This TextField manages the user input. User can enter whatever they want, input
+            * will be checked and validated later. */
             TextField(
                 value = zipCode,
                 onValueChange = {
@@ -249,12 +255,14 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 },
                 label = { Text("Enter ZIP Code") },
                 isError = errorMessage != null,
+                /* For displaying the number pad. */
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            /* Displays the error message if there is one. */
             errorMessage?.let {
                 Text(
                     text = it,
@@ -265,13 +273,16 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            /* Get Weather button */
             Button(
                 onClick = {
                     if (zipCode.length == 5 && zipCode.all {it.isDigit() }) {
+                        /* Calling a suspend function (fetchWeather). Must run in a coroutine.
+                        * Functions are utilizing suspend to protect the main thread. */
                         coroutineScope.launch {
                             val success = viewModel.fetchWeather(zipCode)
                             if (!success) {
-                                errorMessage = "Problem loading weather data. Check your ZIP code."
+                                errorMessage = "Problem getting weather data. Please check your ZIP code."
                             } else {
                                 errorMessage = null
                                 viewModel.fetchForecast(zipCode)
@@ -288,7 +299,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // View Forecast button
+            /* View Forecast button */
             Button(
                 onClick = { navController.navigate("forecast/$zipCode") },
                 modifier = Modifier.fillMaxWidth()

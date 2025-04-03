@@ -11,7 +11,6 @@ Retrofit will automatically convert the response into these objects!
 */
 
 /* Main API response object (for Forecast). */
-/* ASSIGNMENT 4 */
 @Serializable
 data class ForecastData(
     @SerialName("city") val city: City,

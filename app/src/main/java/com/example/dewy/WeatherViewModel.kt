@@ -1,26 +1,27 @@
 package com.example.dewy
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 /* Fetch data (manages API requests) and store results in LiveData. */
 class WeatherViewModel : ViewModel() {
-    /* Hold API response. */
+    /* Define LiveData variables to hold API response and that ViewModel can change. */
     private val _weatherData = MutableLiveData<WeatherData?>()
-    /* ASSIGNMENT 4 */
     private val _forecastData = MutableLiveData<ForecastData?>()
-    /* UI will observe this to update data. */
+    /* UI will observe this to update data. Read-only reference to _weatherData; updates with _weatherData. */
     val weatherData: LiveData<WeatherData?> = _weatherData
-    /* ASSIGNMENT 4 */
     val forecastData: LiveData<ForecastData?> = _forecastData
 
+    /* Fetch weather from OpenWeather. API/network requests done through Retrofit.
+    Functions utilize suspend to safeguard main/UI thread. */
     suspend fun fetchWeather(zip: String): Boolean {
+        /* Make all ZIP codes US-based. Allows user to just enter a 5 digit code and for it to work. */
         val formattedZip = "$zip,us"
+        /* Utilizing boolean values to handle null/non-null API responses. Allows the weatherScreen
+        * to behave appropriately (EX: If valid, but non-applicable, ZIP is entered, the UI will not update. */
         return try {
             val response = RetrofitClient.instance.getWeather(formattedZip, API_KEY)
-            // Log.d("WeatherDebug", "API Response: $response")
             if (response != null) {
                 _weatherData.postValue(response)
                 true
@@ -28,26 +29,18 @@ class WeatherViewModel : ViewModel() {
                 false
             }
         } catch (e: Exception) {
-            /*
-            Debugging
-            Log.d("WeatherDebug", "General Exception: ${e.message}")
-            */
-            /* If error, set _weatherData to null. */
             false
         }
     }
 
-    /* ASSIGNMENT 4 */
+    /* Fetch forecast data from OpenWeather. */
     suspend fun fetchForecast(zip: String): Boolean {
         val formattedZip = "$zip,us"
         return try {
-            Log.d("WeatherViewModel", "Fetching forecast for $zip with API key $API_KEY")
             val response = RetrofitClient.instance.getForecast(formattedZip, API_KEY)
-            Log.d("WeatherViewModel", "Forecast API Response: $response")
             _forecastData.postValue(response)
             true
         } catch (e : Exception) {
-            Log.e("WeatherViewModel", "General Exception: ${e.message}")
             _forecastData.postValue(null)
             false
         }
