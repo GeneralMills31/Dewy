@@ -84,7 +84,6 @@ class WeatherService : Service() {
             }
             notify(notificationId, builder.build())
         }
-
     }
 
     private fun createNotificationChannel() {
