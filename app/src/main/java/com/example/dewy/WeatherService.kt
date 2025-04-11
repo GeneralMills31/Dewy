@@ -47,8 +47,10 @@ class WeatherService : Service() {
     }
 
     // ...
+    // getLastLocation or getCurrentLocation OR requestLocationUpdates?
 
 
+    // WeatherData as a parameter here? Show have this after going through the defined functions?
     private fun showNotification() {
 
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -61,12 +63,13 @@ class WeatherService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        var builder = NotificationCompat.Builder(this, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.notificationIcon) // Put your icon here!
             .setContentTitle(testTitle) // Put your title here!
             .setContentText(textContent) // Put your desc here!
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
+        // Might have to update this and account that it was to activate when the user clicks the button.
         with(NotificationManagerCompat.from(this)) {
             if (ActivityCompat.checkSelfPermission(
                     this,
