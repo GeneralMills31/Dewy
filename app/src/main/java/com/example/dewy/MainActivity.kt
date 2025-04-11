@@ -109,6 +109,7 @@ import com.example.dewy.ui.theme.DewyTheme
 * 1) Declare this service in the manifest!
 * 2) Best to have the connection done here since the service is app wide!
 * 3) Do we use mService or connection for service function calls?
+* 4) Check all dependencies after implementing code!
 */
 
 /* API Key */

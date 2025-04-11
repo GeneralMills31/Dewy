@@ -265,6 +265,14 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            /* Assignment 5
+
+            Place the MyLocation button here! Needs to be next to the input field.
+            Maybe create a Row here to display them side-by-side.
+
+            End Assignment 5
+            */
+
             Spacer(modifier = Modifier.height(8.dp))
 
             /* Displays the error message if there is one. */

@@ -90,9 +90,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.navigation.compose)
-    dependencies {
-    // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.7.6")
-
-    }
+    /* Assignment 5 */
+    implementation(libs.play.services.location)
 }
