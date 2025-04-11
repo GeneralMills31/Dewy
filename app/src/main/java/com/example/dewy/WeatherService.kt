@@ -17,6 +17,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 
 /* Assignment 5 */
 
@@ -46,13 +48,32 @@ class WeatherService : Service() {
         // Location function call here?
     }
 
-    // ...
+    fun fetchLocationSpecificWeather() {
+        val permissionApproved = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        if (permissionApproved) {
+            val cancellationTokenSource = CancellationTokenSource()
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationTokenSource.token)
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        try {
+                            val data = RetrofitClient.instance.getWeatherCoord(lat, lon, API_KEY)
+                            showNotification(data)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
+        } else {
+
+        }
+    }
+
     // getLastLocation or getCurrentLocation OR requestLocationUpdates?
 
-
     // WeatherData as a parameter here? Show have this after going through the defined functions?
-    private fun showNotification() {
-
+    private fun showNotification(weatherData: WeatherData) {
+        // Use this to display the icon on the banner. How to do this exactly tho?
+        val icon = getLocalIcon(weatherData?.weather?.firstOrNull()?.icon)
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -65,8 +86,9 @@ class WeatherService : Service() {
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.notificationIcon) // Put your icon here!
-            .setContentTitle(testTitle) // Put your title here!
-            .setContentText(textContent) // Put your desc here!
+            .setContentTitle("Dewy Weather") // Put your title here!
+            .setContentText(weatherData.weather.firstOrNull()?.description?.replaceFirstChar { it.uppercase() }
+                ?: "N/A",)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
         // Might have to update this and account that it was to activate when the user clicks the button.
