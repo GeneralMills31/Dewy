@@ -4,8 +4,10 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -80,6 +82,7 @@ fun ForecastCardRow(daily: DailyForecast) {
 }
 
 /* Composable function to display the weather data and start data fetching. */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavHostController) {
     /* Observe weather data | Update UI when LiveData changes. */
@@ -272,24 +275,22 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             /* Assignment 5 */
 
-            val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-                    granted ->
+            // Might need to do something for if it is NOT granted?
+            val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()
+            ) { granted ->
                 if (granted) {
-                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                    if (hasNotificationPermission(context)) {
                         startWeatherService(context)
-                    } else {
-                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 }
             }
 
-            val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-                    granted ->
+            // Might need to do something for if it is NOT granted?
+            val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()
+            ) { granted ->
                 if (granted) {
-                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    if (hasLocationPermission(context)) {
                         startWeatherService(context)
-                    } else {
-                        locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                     }
                 }
             }
@@ -297,20 +298,12 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
             /* Button that checks permission details and launches the service. */
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Button(onClick = {
-                    val locationGranted = ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.ACCESS_FINE_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED
-
-                    val notificationGranted = ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.POST_NOTIFICATIONS
-                    ) == PackageManager.PERMISSION_GRANTED
-
-                    if (locationGranted && notificationGranted) {
-                        startWeatherService(context)
-                    } else if (!locationGranted) {
-                        locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                    } else if (!notificationGranted) {
-                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    val locationPermission = hasLocationPermission(context)
+                    val notificationPermission = hasNotificationPermission(context)
+                    when {
+                        !locationPermission -> locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        !notificationPermission -> notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        else -> startWeatherService(context)
                     }
                 }) {
                     Text("My Location")

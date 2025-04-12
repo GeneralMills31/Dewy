@@ -6,6 +6,10 @@ import androidx.core.content.ContextCompat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.annotation.RequiresApi
 
 /* Function to convert the returned sunrise and sunset data into a readable time. */
 fun convertUnixToTime(unixTime: Long): String {
@@ -45,6 +49,20 @@ fun getDayOfWeek(unixTime: Long): String {
     return format.format(date)
 }
 
+/* Function to simply check if location permissions have been granted. */
+fun hasLocationPermission(context: Context): Boolean {
+    return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+/* Function to simply check if notification permissions have been granted. */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+fun hasNotificationPermission(context: Context): Boolean {
+    return ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+/* Function to start the WeatherService. It is used in WeatherScreen to clean up the code a bit. */
 fun startWeatherService(context: Context) {
     val intent = Intent(context, WeatherService::class.java)
     ContextCompat.startForegroundService(context, intent)
