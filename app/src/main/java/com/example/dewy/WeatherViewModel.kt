@@ -3,6 +3,7 @@ package com.example.dewy
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 
 /* Fetch data (manages API requests) and store results in LiveData. */
 class WeatherViewModel : ViewModel() {
@@ -43,6 +44,16 @@ class WeatherViewModel : ViewModel() {
         } catch (e : Exception) {
             _forecastData.postValue(null)
             false
+        }
+    }
+
+    /* Get weather data by coordinates | Used for specific location */
+    suspend fun fetWeatherByCoordinates(lat: Double, lon: Double) {
+        return try {
+            val response = RetrofitClient.instance.getWeatherCoord(lat, lon, API_KEY)
+            _weatherData.postValue(response)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

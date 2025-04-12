@@ -322,7 +322,12 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                             Log.d(TAG, "Notification permission missing. Launching request.")
                             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
-                        else -> startWeatherService(context)
+                        else -> {
+                            startWeatherService(context)
+                            if (context is MainActivity) {
+                                context.mainActivityFetchLocationWeather()
+                            }
+                        }
                     }
                 }) {
                     Text("My Location")

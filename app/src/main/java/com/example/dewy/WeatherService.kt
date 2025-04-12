@@ -13,7 +13,6 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -45,7 +44,21 @@ class WeatherService : Service() {
     /* Needed to call foreground service and stop from hanging */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("WeatherDebug", "onStartCommand() called")
-        fetchLocationSpecificWeather()
+
+        /* Start foreground with a temp notification to keep app from crashing.
+        * startForegroundService() requires that startForeground() be called within 5 seconds.
+        * getCurrentLocation() is slower and can cause the app to never reach it in time. Use this
+        * to keep the app from failing and just simply update the notification later. */
+        val placeholderNotification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Fetching weather data...")
+            .setContentText("Getting your current location")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        startForeground(notificationID, placeholderNotification)
+
+        //fetchLocationSpecificWeather()
         return START_STICKY
     }
 
@@ -58,10 +71,6 @@ class WeatherService : Service() {
     inner class LocalBinder : Binder() {
         /* Return this instance of WeatherService so clients can call public methods. */
         fun getService(): WeatherService = this@WeatherService
-        /* Main call to start location/weather update and show notification. */
-        fun fetchLocationAndNotify() {
-            fetchLocationSpecificWeather()
-        }
     }
 
     /* Function to get current location and show the weather notification. */
@@ -107,39 +116,21 @@ class WeatherService : Service() {
 
     /* Create and display a persistent notification with current weather data. */
     private fun showNotification(weatherData: WeatherData) {
-        /* Grab icon based on returned code. */
-        val icon = getLocalIcon(weatherData.weather.firstOrNull()?.icon)
-
         /* Intent to open app when user taps the notification. */
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
+        val intent = Intent(this, MainActivity::class.java).apply {flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK}
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
         /* Notification builder with basic weather info. */
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(icon) // Put your icon here!
+            .setSmallIcon(getLocalIcon(weatherData.weather.firstOrNull()?.icon)) // Put your icon here!
             .setContentTitle("${weatherData.name}: ${weatherData.main.temp.toInt()}°")
             .setContentText(weatherData.weather.firstOrNull()?.description?.replaceFirstChar { it.uppercase() }
                 ?: "N/A",)
             .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
+            .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
-        // Might have to update this and account that it was to activate when the user clicks the button.
-        if (ActivityCompat.checkSelfPermission(
-                this@WeatherService,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+        Log.d("WeatherDebug", "Updating notification with weather: ${weatherData.name}, ${weatherData.main.temp}")
         Log.d("WeatherDebug", "Calling startForeground() with notification")
         startForeground(notificationID, builder.build())
     }

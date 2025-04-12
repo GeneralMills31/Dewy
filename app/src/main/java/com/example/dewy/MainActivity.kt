@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -128,6 +129,8 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var mService: WeatherService
     private var mBound: Boolean = false
+    /* Debugging */
+    private var pendingLocationFetch = false
 
     /* Defines callbacks for service binding, passed to bindService().
     Must override onServiceConnected and onServiceDisconnected. */
@@ -139,6 +142,13 @@ class MainActivity : ComponentActivity() {
             val binder = service as WeatherService.LocalBinder
             mService = binder.getService()
             mBound = true
+
+            if (pendingLocationFetch) {
+                Log.d("WeatherDebug", "Pending fetch detected. Fetching now.")
+                mService.fetchLocationSpecificWeather()
+                pendingLocationFetch = false
+            }
+
         }
         override fun onServiceDisconnected(arg0: ComponentName) {
             mBound = false
@@ -189,6 +199,18 @@ class MainActivity : ComponentActivity() {
         unbindService(connection)
         mBound = false
     }
+
+    fun mainActivityFetchLocationWeather() {
+        if (mBound) {
+            Log.d("WeatherDebug", "Service bound. Fetching location weather.")
+            mService.fetchLocationSpecificWeather()
+            pendingLocationFetch = false
+        } else {
+            Log.d("WeatherDebug", "Service not bound yet. Will not fetch.")
+            pendingLocationFetch = true
+        }
+    }
+
 
     /* End Assignment 5 */
 }
