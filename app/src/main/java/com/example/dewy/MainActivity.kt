@@ -1,6 +1,5 @@
 package com.example.dewy
 /* Imports | Ctrl + Alt + O to optimize imports. */
-import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent

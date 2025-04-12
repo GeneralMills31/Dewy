@@ -1,5 +1,8 @@
 package com.example.dewy
 
+import android.content.Context
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,4 +43,9 @@ fun getDayOfWeek(unixTime: Long): String {
     /* 'EEE' for Mon, Tue, etc. 'EEEE" for Monday, Tuesday, etc. */
     val format = SimpleDateFormat("EEE", Locale.getDefault())
     return format.format(date)
+}
+
+fun startWeatherService(context: Context) {
+    val intent = Intent(context, WeatherService::class.java)
+    ContextCompat.startForegroundService(context, intent)
 }

@@ -1,10 +1,11 @@
 package com.example.dewy
 
-import android.content.ComponentName
-import android.content.ContentValues.TAG
-import android.content.ServiceConnection
-import android.os.IBinder
-import android.util.Log
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,10 +41,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
@@ -86,6 +89,8 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
     /* Used for ZIP input validation. */
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
+    /* Assignment 5 */
+    val context = LocalContext.current
 
 
     /* Launch on startup and with default location (Faribault, MN) */
@@ -265,13 +270,54 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            /* Assignment 5
+            /* Assignment 5 */
 
-            Place the MyLocation button here! Needs to be next to the input field.
-            Maybe create a Row here to display them side-by-side.
+            val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                    granted ->
+                if (granted) {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                        startWeatherService(context)
+                    } else {
+                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            }
 
-            End Assignment 5
-            */
+            val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                    granted ->
+                if (granted) {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        startWeatherService(context)
+                    } else {
+                        locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                }
+            }
+
+            /* Button that checks permission details and launches the service. */
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Button(onClick = {
+                    val locationGranted = ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.ACCESS_FINE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                    val notificationGranted = ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                    if (locationGranted && notificationGranted) {
+                        startWeatherService(context)
+                    } else if (!locationGranted) {
+                        locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    } else if (!notificationGranted) {
+                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }) {
+                    Text("My Location")
+                }
+            }
+
+            /* End Assignment 5 */
 
             Spacer(modifier = Modifier.height(8.dp))
 
