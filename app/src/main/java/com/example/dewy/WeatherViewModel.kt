@@ -3,7 +3,6 @@ package com.example.dewy
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 
 /* Fetch data (manages API requests) and store results in LiveData. */
 class WeatherViewModel : ViewModel() {

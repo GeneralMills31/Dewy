@@ -58,7 +58,6 @@ class WeatherService : Service() {
 
         startForeground(notificationID, placeholderNotification)
 
-        //fetchLocationSpecificWeather()
         return START_STICKY
     }
 
@@ -75,7 +74,7 @@ class WeatherService : Service() {
 
     /* Function to get current location and show the weather notification. */
     fun getCurrentLocation(callback: (Double, Double) -> Unit) {
-        Log.d("WeatherDebug", "fetchLocationSpecificWeather() called")
+        Log.d("WeatherDebug", "getCurrentLocation() called")
         /* Check if location permission is granted. */
         val permissionApproved = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED

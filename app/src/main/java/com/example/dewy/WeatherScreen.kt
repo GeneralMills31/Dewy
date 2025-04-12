@@ -2,9 +2,8 @@ package com.example.dewy
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -48,11 +47,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
-import android.util.Log
 
 @Composable
 /* Make a simple descriptive card for the day that is passed through. This is used for the WeatherScreens
@@ -82,6 +79,17 @@ fun ForecastCardRow(daily: DailyForecast) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+fun continueIfPermissionGranted(context: Context) {
+    if (hasLocationPermission(context) && hasNotificationPermission(context)) {
+        startWeatherService(context)
+        if (context is MainActivity) {
+            context.fetchLocationAndUpdateWeather()
+        }
+    }
+}
+
+
 /* Composable function to display the weather data and start data fetching. */
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -95,6 +103,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
     val coroutineScope = rememberCoroutineScope()
     /* Assignment 5 */
     val context = LocalContext.current
+
     /* Debugging */
     val TAG = "WeatherDebug"
 
@@ -186,56 +195,56 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
                 /* Additional sub-column for secondary information (humidity, pressure,
                 * wind speed, gust, etc.). */
-//                Column(
-//                    modifier = Modifier
-//                        .padding(vertical = 6.dp, horizontal = 6.dp)
-//                        .fillMaxWidth(),
-//                    horizontalAlignment = Alignment.Start,
-//                    verticalArrangement = Arrangement.Bottom
-//                ) {
-//                    // Humidity
-//                    Text(
-//                        text = "RH: ${weatherData?.main?.humidity ?: "N/A"}%",
-//                        color = Color.White,
-//                        style = MaterialTheme.typography.bodySmall
-//                    )
-//                    // Pressure
-//                    Text(
-//                        text = "hPa: ${weatherData?.main?.pressure ?: "N/A"}",
-//                        color = Color.White,
-//                        style = MaterialTheme.typography.bodySmall
-//                    )
-//                    // Wind Speed
-//                    Text(
-//                        text = "Wind: ${weatherData?.wind?.speed ?: "N/A"}MPH",
-//                        color = Color.White,
-//                        style = MaterialTheme.typography.bodySmall
-//                    )
-//                    // Gust
-//                    Text(
-//                        text = "Gust: ${weatherData?.wind?.gust ?: "N/A"}MPH",
-//                        color = Color.White,
-//                        style = MaterialTheme.typography.bodySmall
-//                    )
-//                    // Country
-//                    Text(
-//                        text = "Country: ${weatherData?.sys?.country ?: "N/A"}",
-//                        color = Color.White,
-//                        style = MaterialTheme.typography.bodySmall
-//                    )
-//                    // Sunrise
-//                    Text(
-//                        text = "Sunrise: ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) } ?: "N/A"}",
-//                        color = Color.White,
-//                        style = MaterialTheme.typography.bodySmall
-//                    )
-//                    // Sunset
-//                    Text(
-//                        text = "Sunset: ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) } ?: "N/A"}",
-//                        color = Color.White,
-//                        style = MaterialTheme.typography.bodySmall
-//                    )
-//                }
+                Column(
+                    modifier = Modifier
+                        .padding(vertical = 6.dp, horizontal = 6.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    // Humidity
+                    Text(
+                        text = "RH: ${weatherData?.main?.humidity ?: "N/A"}%",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Pressure
+                    Text(
+                        text = "hPa: ${weatherData?.main?.pressure ?: "N/A"}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Wind Speed
+                    Text(
+                        text = "Wind: ${weatherData?.wind?.speed ?: "N/A"}MPH",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Gust
+                    Text(
+                        text = "Gust: ${weatherData?.wind?.gust ?: "N/A"}MPH",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Country
+                    Text(
+                        text = "Country: ${weatherData?.sys?.country ?: "N/A"}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Sunrise
+                    Text(
+                        text = "Sunrise: ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) } ?: "N/A"}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Sunset
+                    Text(
+                        text = "Sunset: ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) } ?: "N/A"}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -279,54 +288,35 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
             /* Assignment 5 */
 
             // Might need to do something for if it is NOT granted?
-            val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()
-            ) { granted ->
-                Log.d(TAG, "Inside location launcher | Location permission result: $granted")
-                if (granted) {
-                    if (hasNotificationPermission(context)) {
-                        Log.d(TAG, "Inside location launcher | notifications also granted | Starting service")
-                        startWeatherService(context)
-                    }
-                } else {
-                    Log.d(TAG, "Location permission denied")
-                }
+            val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                Log.d(TAG, "Notification permission result: $granted")
+                continueIfPermissionGranted(context)
             }
 
             // Might need to do something for if it is NOT granted?
-            val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()
-            ) { granted ->
-                Log.d(TAG, "Inside notification launcher | Notification permission result: $granted")
-                if (granted) {
-                    if (hasLocationPermission(context)) {
-                        Log.d(TAG, "Inside notification launcher | location also granted | Starting service")
-                        startWeatherService(context)
-                    }
+            val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                Log.d(TAG, "Location permission result: $granted")
+                if (!hasNotificationPermission(context)) {
+                    notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
-                    Log.d(TAG, "Notification permission denied")
+                    continueIfPermissionGranted(context)
                 }
             }
 
             /* Button that checks permission details and launches the service. */
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Button(onClick = {
-                    val locationPermission = hasLocationPermission(context)
-                    Log.d("WeatherDebug", "Inside button | Value of locationPermission: $locationPermission")
-                    val notificationPermission = hasNotificationPermission(context)
-                    Log.d("WeatherDebug", "Inside button | Value of nocationPermission: $notificationPermission")
                     when {
-                        !locationPermission -> {
-                            Log.d(TAG, "Location permission missing. Launching request.")
+                        !hasLocationPermission(context) -> {
+                            Log.d(TAG, "Requesting location permission")
                             locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                         }
-                        !notificationPermission -> {
-                            Log.d(TAG, "Notification permission missing. Launching request.")
+                        !hasNotificationPermission(context) -> {
+                            Log.d(TAG, "Requesting notification permission")
                             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
                         else -> {
-                            startWeatherService(context)
-                            if (context is MainActivity) {
-                                context.fetchLocationAndUpdateWeather()
-                            }
+                            continueIfPermissionGranted(context)
                         }
                     }
                 }) {
