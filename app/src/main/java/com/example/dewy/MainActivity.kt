@@ -85,6 +85,8 @@ import kotlinx.coroutines.launch
 * - Externalize all strings and/or define constants for specific values.
 * - Clean up additional weather data column (make it a card with a LazyColumn)?
 * - Fix ForecastScreen (will refresh/re-run when an inapplicable ZIP is entered).
+* - Move location button next to the ZIP field!
+* - Consider refactoring code a bit. Move some work into Utilities if able.
 */
 
 /*
@@ -120,47 +122,50 @@ import kotlinx.coroutines.launch
 * request it itself. The composable should be the one to get permission!
 */
 
-/* API Key */
+/* OpenWeather API Key */
 const val API_KEY = BuildConfig.OPENWEATHER_API_KEY
 
 /* MainActivity where the UI is set/Entry point of the app.
 * ComponentActivity in the base class of JC apps. */
 class MainActivity : ComponentActivity() {
 
-    /* Assignment 5 */
     /* ServiceConnection Implementation! */
 
+    /* Reference to bound service. */
     private lateinit var mService: WeatherService
+    /* Indicates whether activity is bound or not. */
     private var mBound: Boolean = false
-    /* Debugging */
+    /* Used in the situation where fetchLocationAndUpdateWeather is called before the binding
+    *  is complete. Essentially, allows data fetching to continue after binding is complete and
+    *  avoid issues the app can run into if the service is called/referenced before it is bound. */
     private var pendingLocationFetch = false
+    /* Reference to the WeatherViewModel */
     private lateinit var viewModel: WeatherViewModel
 
-    /* Defines callbacks for service binding, passed to bindService().
-    Must override onServiceConnected and onServiceDisconnected. */
+    /* Function used to bind MainActivity to WeatherService. Must override onServiceConnected
+       and onServiceDisconnected. */
     private val connection = object : ServiceConnection {
-
-        /* When the system calls your onServiceConnected() callback method,
-        you can begin making calls to the service, using the methods defined by the interface! */
+        /* When the system calls your onServiceConnected() callback method, you can begin making
+           calls to the service, using the methods defined by the interface! Triggered when the
+           service is connected. */
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             val binder = service as WeatherService.LocalBinder
             mService = binder.getService()
             mBound = true
 
             if (pendingLocationFetch) {
-                Log.d("WeatherDebug", "Pending fetch detected. Fetching now.")
+                // Log.d("WeatherDebug", "Pending fetch detected. Fetching now.")
                 fetchLocationAndUpdateWeather()
                 pendingLocationFetch = false
             }
-
         }
+        /* Triggered when the service is disconnected. */
         override fun onServiceDisconnected(arg0: ComponentName) {
             mBound = false
         }
     }
 
-    /* End Assignment 5 */
-
+    /* this is the entry point of the app. Sets up the ViewModel, theme, and Compose navigation. */
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -187,8 +192,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /* Assignment 5 */
-
     /* This is the binding! Call bindService and pass the ServiceConnection implementation */
     override fun onStart() {
         super.onStart()
@@ -199,28 +202,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /* Function to unbind from the service. */
     override fun onStop() {
         super.onStop()
         unbindService(connection)
         mBound = false
     }
 
+    /* Called from WeatherScreen when the user clicks location button. If everything is bound and
+    *  good it will request location information and then pass that into the viewmodel to get location
+    *  specific weather data. Sets the pendingLocationFetch to true if not yet bound so it may attempt
+    *  to do so again after binding. */
     fun fetchLocationAndUpdateWeather() {
         if (mBound) {
             mService.getCurrentLocation { lat, lon ->
-                Log.d("WeatherDebug", "Calling ViewModel to fetch weather from location: $lat, $lon")
+                // Log.d("WeatherDebug", "Calling ViewModel to fetch weather from: $lat, $lon")
                 lifecycleScope.launch {
                     viewModel.fetchWeatherByCoordinates(lat, lon)
                 }
             }
         } else {
-            Log.d("WeatherDebug", "Service not yet bound. Cannot fetch location.")
+            // Log.d("WeatherDebug", "Service not bound yet.")
             pendingLocationFetch = true
         }
     }
-
-
-    /* End Assignment 5 */
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
