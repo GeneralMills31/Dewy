@@ -104,12 +104,15 @@ import com.example.dewy.ui.theme.DewyTheme
 * QUESTIONS:
 * 1) Do we have to pass anything from MainActivity to other files? Is the order correct here?
 * 2) What should I put in the interface (functions)? How to call them? (Notification? Location?)
+* 3) getLastLocation or getCurrentLocation OR requestLocationUpdates?
 *
 * NOTES:
 * 1) Declare this service in the manifest!
 * 2) Best to have the connection done here since the service is app wide!
 * 3) Do we use mService or connection for service function calls?
 * 4) Check all dependencies after implementing code!
+* 5) Service doesn't really ask for permission. It checks if it has permission, but it won't
+* request it itself. The composable should be the one to get permission!
 */
 
 /* API Key */
