@@ -53,7 +53,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 /* Make a simple descriptive card for the day that is passed through. This is used for the WeatherScreens
-* LazyRow. */
+*  LazyRow. */
 fun ForecastCardRow(daily: DailyForecast) {
     val icon = getLocalIcon(daily.weather?.firstOrNull()?.icon)
     val day = getDayOfWeek(daily.dt)
@@ -79,8 +79,10 @@ fun ForecastCardRow(daily: DailyForecast) {
     }
 }
 
+/* A helper function to continue the location flow if both permissions are granted.
+ * It will start WeatherService and call fetchLocationAndUpdateWeather() from MainActivity. */
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-fun continueIfPermissionGranted(context: Context) {
+fun startFlowIfPermissionGranted(context: Context) {
     if (hasLocationPermission(context) && hasNotificationPermission(context)) {
         startWeatherService(context)
         if (context is MainActivity) {
@@ -97,14 +99,13 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
     /* Observe weather data | Update UI when LiveData changes. */
     val weatherData by viewModel.weatherData.observeAsState()
     val forecastData by viewModel.forecastData.observeAsState()
-    var zipCode by remember { mutableStateOf("55021") }
     /* Used for ZIP input validation. */
+    var zipCode by remember { mutableStateOf("55021") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
     /* Assignment 5 */
     val context = LocalContext.current
-
-    /* Debugging */
+    /* Used for debugging */
     val TAG = "WeatherDebug"
 
 
@@ -287,19 +288,25 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             /* Assignment 5 */
 
-            // Might need to do something for if it is NOT granted?
+            /*
+             * Permission launchers follow a sequential pattern:
+             * 1. If location not granted, request it
+             * 2. After granted, check notification
+             * 3. If not granted, request notification
+             * 4. When both are granted, proceed
+             */
+
             val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
                 Log.d(TAG, "Notification permission result: $granted")
-                continueIfPermissionGranted(context)
+                startFlowIfPermissionGranted(context)
             }
 
-            // Might need to do something for if it is NOT granted?
             val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
                 Log.d(TAG, "Location permission result: $granted")
                 if (!hasNotificationPermission(context)) {
                     notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
-                    continueIfPermissionGranted(context)
+                    startFlowIfPermissionGranted(context)
                 }
             }
 
@@ -316,7 +323,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
                         else -> {
-                            continueIfPermissionGranted(context)
+                            startFlowIfPermissionGranted(context)
                         }
                     }
                 }) {
