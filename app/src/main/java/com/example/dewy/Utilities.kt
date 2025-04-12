@@ -10,6 +10,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
+import android.util.Log
 
 /* Function to convert the returned sunrise and sunset data into a readable time. */
 fun convertUnixToTime(unixTime: Long): String {
@@ -64,6 +65,7 @@ fun hasNotificationPermission(context: Context): Boolean {
 
 /* Function to start the WeatherService. It is used in WeatherScreen to clean up the code a bit. */
 fun startWeatherService(context: Context) {
+    Log.d("WeatherDebug", "startWeatherService() called")
     val intent = Intent(context, WeatherService::class.java)
     ContextCompat.startForegroundService(context, intent)
 }

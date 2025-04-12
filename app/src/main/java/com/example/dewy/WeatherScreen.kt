@@ -52,6 +52,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
+import android.util.Log
 
 @Composable
 /* Make a simple descriptive card for the day that is passed through. This is used for the WeatherScreens
@@ -94,6 +95,8 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
     val coroutineScope = rememberCoroutineScope()
     /* Assignment 5 */
     val context = LocalContext.current
+    /* Debugging */
+    val TAG = "WeatherDebug"
 
 
     /* Launch on startup and with default location (Faribault, MN) */
@@ -278,20 +281,28 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
             // Might need to do something for if it is NOT granted?
             val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()
             ) { granted ->
+                Log.d(TAG, "Inside location launcher | Location permission result: $granted")
                 if (granted) {
                     if (hasNotificationPermission(context)) {
+                        Log.d(TAG, "Inside location launcher | notifications also granted | Starting service")
                         startWeatherService(context)
                     }
+                } else {
+                    Log.d(TAG, "Location permission denied")
                 }
             }
 
             // Might need to do something for if it is NOT granted?
             val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()
             ) { granted ->
+                Log.d(TAG, "Inside notification launcher | Notification permission result: $granted")
                 if (granted) {
                     if (hasLocationPermission(context)) {
+                        Log.d(TAG, "Inside notification launcher | location also granted | Starting service")
                         startWeatherService(context)
                     }
+                } else {
+                    Log.d(TAG, "Notification permission denied")
                 }
             }
 
@@ -299,10 +310,18 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Button(onClick = {
                     val locationPermission = hasLocationPermission(context)
+                    Log.d("WeatherDebug", "Inside button | Value of locationPermission: $locationPermission")
                     val notificationPermission = hasNotificationPermission(context)
+                    Log.d("WeatherDebug", "Inside button | Value of nocationPermission: $notificationPermission")
                     when {
-                        !locationPermission -> locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                        !notificationPermission -> notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        !locationPermission -> {
+                            Log.d(TAG, "Location permission missing. Launching request.")
+                            locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        }
+                        !notificationPermission -> {
+                            Log.d(TAG, "Notification permission missing. Launching request.")
+                            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
                         else -> startWeatherService(context)
                     }
                 }) {

@@ -21,6 +21,7 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import android.util.Log
 
 /* Assignment 5 */
 
@@ -34,10 +35,18 @@ class WeatherService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d("WeatherDebug", "WeatherService created")
         /* Initialize location client. */
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         /* Create notification channel (Required on Android 8+). */
         createNotificationChannel()
+    }
+
+    /* Needed to call foreground service and stop from hanging */
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d("WeatherDebug", "onStartCommand() called")
+        fetchLocationSpecificWeather()
+        return START_STICKY
     }
 
     /* This runs/is returned when bindService is called in MainActivity! */
@@ -57,11 +66,14 @@ class WeatherService : Service() {
 
     /* Function to get current location and show the weather notification. */
     fun fetchLocationSpecificWeather() {
+        Log.d("WeatherDebug", "fetchLocationSpecificWeather() called")
         /* Check if location permission is granted. */
         val permissionApproved = ActivityCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
+
+        Log.d("WeatherDebug", "Location permission approved? $permissionApproved")
 
         if (permissionApproved) {
             /* Use getCurrentLocation for accurate single fix. */
@@ -70,6 +82,7 @@ class WeatherService : Service() {
                 Priority.PRIORITY_HIGH_ACCURACY,
                 cancellationTokenSource.token
             ).addOnSuccessListener { location ->
+                Log.d("WeatherDebug", "getCurrentLocation() success: $location")
                 if (location != null) {
                     /* Run weather fetch and notification logic in background. */
                     serviceScope.launch {
@@ -87,6 +100,7 @@ class WeatherService : Service() {
                 }
             }
         } else {
+            Log.d("WeatherDebug", "Permission not granted. Stopping service.")
             stopSelf()
         }
     }
@@ -118,19 +132,16 @@ class WeatherService : Service() {
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
-
-
         // Might have to update this and account that it was to activate when the user clicks the button.
-        with(NotificationManagerCompat.from(this)) {
-            if (ActivityCompat.checkSelfPermission(
-                    this@WeatherService,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                return
-            }
-            notify(notificationID, builder.build())
+        if (ActivityCompat.checkSelfPermission(
+                this@WeatherService,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
         }
+        Log.d("WeatherDebug", "Calling startForeground() with notification")
+        startForeground(notificationID, builder.build())
     }
 
     private fun createNotificationChannel() {
