@@ -48,7 +48,7 @@ class WeatherViewModel : ViewModel() {
     }
 
     /* Get weather data by coordinates | Used for specific location */
-    suspend fun fetWeatherByCoordinates(lat: Double, lon: Double) {
+    suspend fun fetchWeatherByCoordinates(lat: Double, lon: Double) {
         return try {
             val response = RetrofitClient.instance.getWeatherCoord(lat, lon, API_KEY)
             _weatherData.postValue(response)

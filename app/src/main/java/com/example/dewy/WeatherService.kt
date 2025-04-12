@@ -74,12 +74,10 @@ class WeatherService : Service() {
     }
 
     /* Function to get current location and show the weather notification. */
-    fun fetchLocationSpecificWeather() {
+    fun getCurrentLocation(callback: (Double, Double) -> Unit) {
         Log.d("WeatherDebug", "fetchLocationSpecificWeather() called")
         /* Check if location permission is granted. */
-        val permissionApproved = ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
+        val permissionApproved = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
         Log.d("WeatherDebug", "Location permission approved? $permissionApproved")
@@ -93,24 +91,30 @@ class WeatherService : Service() {
             ).addOnSuccessListener { location ->
                 Log.d("WeatherDebug", "getCurrentLocation() success: $location")
                 if (location != null) {
-                    /* Run weather fetch and notification logic in background. */
+                    val lat = location.latitude
+                    val lon = location.longitude
+                    callback(lat, lon)
+
+                    // Fetch weather and update notification
                     serviceScope.launch {
                         try {
-                            val data = RetrofitClient.instance.getWeatherCoord(
-                                location.latitude,
-                                location.longitude,
-                                API_KEY
-                            )
-                            showNotification(data)
+                            Log.d("WeatherDebug", "API key being used: ${BuildConfig.OPENWEATHER_API_KEY}")
+                            Log.d("WeatherDebug", "Making coord weather call with lat=$lat, lon=$lon")
+                            val weatherData = RetrofitClient.instance.getWeatherCoord(lat, lon, BuildConfig.OPENWEATHER_API_KEY)
+                            showNotification(weatherData)
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            Log.e("WeatherDebug", "Failed to fetch weather for notification: ${e.message}")
                         }
                     }
+                } else {
+                    Log.d("WeatherDebug", "Location is null")
                 }
+            }.addOnFailureListener {
+                Log.d("WeatherDebug", "Failed to grab location ${it.message}")
             }
         } else {
             Log.d("WeatherDebug", "Permission not granted. Stopping service.")
-            stopSelf()
+            return
         }
     }
 

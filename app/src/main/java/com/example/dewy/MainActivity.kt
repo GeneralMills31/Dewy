@@ -18,6 +18,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.dewy.ui.theme.DewyTheme
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 /*  GENERAL NOTES AND REFERENCES:
  *  Icon Set = Kawaii Flat
@@ -131,6 +134,7 @@ class MainActivity : ComponentActivity() {
     private var mBound: Boolean = false
     /* Debugging */
     private var pendingLocationFetch = false
+    private lateinit var viewModel: WeatherViewModel
 
     /* Defines callbacks for service binding, passed to bindService().
     Must override onServiceConnected and onServiceDisconnected. */
@@ -145,7 +149,7 @@ class MainActivity : ComponentActivity() {
 
             if (pendingLocationFetch) {
                 Log.d("WeatherDebug", "Pending fetch detected. Fetching now.")
-                mService.fetchLocationSpecificWeather()
+                fetchLocationAndUpdateWeather()
                 pendingLocationFetch = false
             }
 
@@ -160,6 +164,7 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel = ViewModelProvider(this)[WeatherViewModel::class.java]
         /* Extend UI to edges of screen. */
         enableEdgeToEdge()
         /* Set/Load UI/WeatherScreen. */
@@ -171,7 +176,7 @@ class MainActivity : ComponentActivity() {
                 /* Define NavHost, controller to use, and starting screen */
                 NavHost(navController = navController, startDestination = "weather") {
                     /* Setup main route and pass navController for navigation */
-                    composable("weather") { WeatherScreen(navController = navController) }
+                    composable("weather") { WeatherScreen(viewModel = viewModel, navController = navController) }
                     /* Setup forecast route and pass navController */
                     composable("forecast/{zip}") { backStackEntry ->
                         val zip = backStackEntry.arguments?.getString("zip") ?: "55021"
@@ -200,13 +205,16 @@ class MainActivity : ComponentActivity() {
         mBound = false
     }
 
-    fun mainActivityFetchLocationWeather() {
+    fun fetchLocationAndUpdateWeather() {
         if (mBound) {
-            Log.d("WeatherDebug", "Service bound. Fetching location weather.")
-            mService.fetchLocationSpecificWeather()
-            pendingLocationFetch = false
+            mService.getCurrentLocation { lat, lon ->
+                Log.d("WeatherDebug", "Calling ViewModel to fetch weather from location: $lat, $lon")
+                lifecycleScope.launch {
+                    viewModel.fetchWeatherByCoordinates(lat, lon)
+                }
+            }
         } else {
-            Log.d("WeatherDebug", "Service not bound yet. Will not fetch.")
+            Log.d("WeatherDebug", "Service not yet bound. Cannot fetch location.")
             pendingLocationFetch = true
         }
     }

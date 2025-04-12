@@ -34,7 +34,7 @@ interface WeatherApi {
     @GET("weather")
     suspend fun getWeatherCoord(
         @Query("lat") lat: Double,
-        @Query("long") long: Double,
+        @Query("lon") lon: Double,
         @Query("appid") apiKey: String,
         @Query("units") units: String = "imperial"
     ) : WeatherData

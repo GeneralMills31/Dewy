@@ -186,56 +186,56 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
                 /* Additional sub-column for secondary information (humidity, pressure,
                 * wind speed, gust, etc.). */
-                Column(
-                    modifier = Modifier
-                        .padding(vertical = 6.dp, horizontal = 6.dp)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    // Humidity
-                    Text(
-                        text = "RH: ${weatherData?.main?.humidity ?: "N/A"}%",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    // Pressure
-                    Text(
-                        text = "hPa: ${weatherData?.main?.pressure ?: "N/A"}",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    // Wind Speed
-                    Text(
-                        text = "Wind: ${weatherData?.wind?.speed ?: "N/A"}MPH",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    // Gust
-                    Text(
-                        text = "Gust: ${weatherData?.wind?.gust ?: "N/A"}MPH",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    // Country
-                    Text(
-                        text = "Country: ${weatherData?.sys?.country ?: "N/A"}",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    // Sunrise
-                    Text(
-                        text = "Sunrise: ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) } ?: "N/A"}",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    // Sunset
-                    Text(
-                        text = "Sunset: ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) } ?: "N/A"}",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
+//                Column(
+//                    modifier = Modifier
+//                        .padding(vertical = 6.dp, horizontal = 6.dp)
+//                        .fillMaxWidth(),
+//                    horizontalAlignment = Alignment.Start,
+//                    verticalArrangement = Arrangement.Bottom
+//                ) {
+//                    // Humidity
+//                    Text(
+//                        text = "RH: ${weatherData?.main?.humidity ?: "N/A"}%",
+//                        color = Color.White,
+//                        style = MaterialTheme.typography.bodySmall
+//                    )
+//                    // Pressure
+//                    Text(
+//                        text = "hPa: ${weatherData?.main?.pressure ?: "N/A"}",
+//                        color = Color.White,
+//                        style = MaterialTheme.typography.bodySmall
+//                    )
+//                    // Wind Speed
+//                    Text(
+//                        text = "Wind: ${weatherData?.wind?.speed ?: "N/A"}MPH",
+//                        color = Color.White,
+//                        style = MaterialTheme.typography.bodySmall
+//                    )
+//                    // Gust
+//                    Text(
+//                        text = "Gust: ${weatherData?.wind?.gust ?: "N/A"}MPH",
+//                        color = Color.White,
+//                        style = MaterialTheme.typography.bodySmall
+//                    )
+//                    // Country
+//                    Text(
+//                        text = "Country: ${weatherData?.sys?.country ?: "N/A"}",
+//                        color = Color.White,
+//                        style = MaterialTheme.typography.bodySmall
+//                    )
+//                    // Sunrise
+//                    Text(
+//                        text = "Sunrise: ${weatherData?.sys?.sunrise?.let { convertUnixToTime(it) } ?: "N/A"}",
+//                        color = Color.White,
+//                        style = MaterialTheme.typography.bodySmall
+//                    )
+//                    // Sunset
+//                    Text(
+//                        text = "Sunset: ${weatherData?.sys?.sunset?.let { convertUnixToTime(it) } ?: "N/A"}",
+//                        color = Color.White,
+//                        style = MaterialTheme.typography.bodySmall
+//                    )
+//                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -325,7 +325,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                         else -> {
                             startWeatherService(context)
                             if (context is MainActivity) {
-                                context.mainActivityFetchLocationWeather()
+                                context.fetchLocationAndUpdateWeather()
                             }
                         }
                     }
