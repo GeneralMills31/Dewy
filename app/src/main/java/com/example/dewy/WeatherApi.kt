@@ -29,4 +29,13 @@ interface WeatherApi {
         /* Number of days to retrieve/return */
         @Query("cnt") days: Int = 16
     ): ForecastData
+
+    /* Get weather by coordinates. */
+    @GET("weather")
+    suspend fun getWeatherCoord(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("appid") apiKey: String,
+        @Query("units") units: String = "imperial"
+    ) : WeatherData
 }

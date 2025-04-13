@@ -1,5 +1,12 @@
 package com.example.dewy
 
+import android.Manifest
+import android.content.Context
+import android.os.Build
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -45,7 +53,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 /* Make a simple descriptive card for the day that is passed through. This is used for the WeatherScreens
-* LazyRow. */
+*  LazyRow. */
 fun ForecastCardRow(daily: DailyForecast) {
     val icon = getLocalIcon(daily.weather?.firstOrNull()?.icon)
     val day = getDayOfWeek(daily.dt)
@@ -71,16 +79,37 @@ fun ForecastCardRow(daily: DailyForecast) {
     }
 }
 
+/* A helper function to continue the location flow if both permissions are granted.
+ * It will start WeatherService and call fetchLocationAndUpdateWeather() from MainActivity. */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+fun startFlowIfPermissionGranted(context: Context) {
+    if (hasLocationPermission(context) && hasNotificationPermission(context)) {
+        startWeatherService(context)
+        /* Check if the current context is from MainActivity. fetchLocationAndUpdateWeather
+        *  is from MainActivity so this needs to be the case. */
+        if (context is MainActivity) {
+            context.fetchLocationAndUpdateWeather()
+        }
+    }
+}
+
+
 /* Composable function to display the weather data and start data fetching. */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavHostController) {
     /* Observe weather data | Update UI when LiveData changes. */
     val weatherData by viewModel.weatherData.observeAsState()
     val forecastData by viewModel.forecastData.observeAsState()
+    /* Used for ZIP input validation. Defaults to Faribault, MN. */
     var zipCode by remember { mutableStateOf("55021") }
-    /* Used for ZIP input validation. */
+    /* Holds an error message if there is one. */
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    /* Used for launching suspend functions. */
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    /* Used for debugging | Lots of them in this file. */
+    val TAG = "WeatherDebug"
 
 
     /* Launch on startup and with default location (Faribault, MN) */
@@ -115,9 +144,6 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
             )
 
             Spacer(modifier = Modifier.height(24.dp))
-
-            /* UPDATE this area to utilize -> weatherData?.let { ... }
-            * Will only run this area if WeatherData is NOT null. */
 
             /* Where the icon is handled and displayed. Utilizes a function to map a locally stored
             * icon to the icon code from the API response. */
@@ -169,7 +195,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 }
 
                 /* Additional sub-column for secondary information (humidity, pressure,
-                * wind speed, gust, etc.). */
+                *  wind speed, gust, etc.). */
                 Column(
                     modifier = Modifier
                         .padding(vertical = 6.dp, horizontal = 6.dp)
@@ -224,10 +250,10 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            /* Code here takes five of the days returned from the forecast API response
+            /* Code here takes seven of the days returned from the forecast API response
             * and creates a card for them (utilizing ForecastCardRow()) and then adds each of
             * them to a LazyRow. */
-            forecastData?.list?.take(5)?.let { forecastList ->
+            forecastData?.list?.take(7)?.let { forecastList ->
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(forecastList) { daily ->
                         ForecastCardRow(daily)
@@ -238,13 +264,13 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
             Spacer(modifier = Modifier.height(12.dp))
 
             /* Error handling reminder:
-            * Initially LaunchedEffect will trigger and load data for the ZIP 55021 (Faribault).
-            * weatherData and forecastData will be setup and observed at this time as well.
-            * Essentially, the button does input validation (length = 5 & only digits). Then
-            * WeatherViewModels fetchWeather function checks for and handles null values
-            * (if ZIP entered is valid but doesn't exist/isn't applicable.) and will return
-            * a boolean value based on the functions success. The button will then respond based
-            * on this boolean (display an error message or not). */
+            *  Initially LaunchedEffect will trigger and load data for the ZIP 55021 (Faribault).
+            *  weatherData and forecastData will be setup and observed at this time as well.
+            *  Essentially, the button does input validation (length = 5 & only digits). Then
+            *  WeatherViewModels fetchWeather function checks for and handles null values
+            *  (if ZIP entered is valid but doesn't exist/isn't applicable.) and will return
+            *  a boolean value based on the functions success. The button will then respond based
+            *  on this boolean (display an error message or not). */
 
             /* This TextField manages the user input. User can enter whatever they want, input
             * will be checked and validated later. */
@@ -259,6 +285,55 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            /* Permission launchers follow a sequential pattern:
+             * 1) If location is not granted, request it.
+             * 2) If granted, check notification permission.
+             * 3) If not granted, request notification permission.
+             * 4) When both are granted, proceed with the next step in the process (startFlow).
+             * NOTE: Might have a problem where location is not granted and notification is granted.
+             *       Might have to do some additional work later on to make this clearer.
+             *       In cases like this, nothing will happen. Should try to make the situation
+             *       clearer to the user. */
+
+            /* Requests notification permission. */
+            val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                // Log.d(TAG, "Notification permission result: $granted")
+                startFlowIfPermissionGranted(context)
+            }
+
+            /* Requests location permission. Checks notification permission as well. If both are
+            *  granted, it will start the weather service and data fetching to cause a live data update. */
+            val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                // Log.d(TAG, "Location permission result: $granted")
+                if (!hasNotificationPermission(context)) {
+                    notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    startFlowIfPermissionGranted(context)
+                }
+            }
+
+            /* Button that checks permission details and helps launch the service.
+            *  Works in tandem with the launchers to keep the flow reasonable. */
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Button(onClick = {
+                    when {
+                        !hasLocationPermission(context) -> {
+                            // Log.d(TAG, "Requesting location permission")
+                            locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        }
+                        !hasNotificationPermission(context) -> {
+                            // Log.d(TAG, "Requesting notification permission")
+                            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        else -> {
+                            startFlowIfPermissionGranted(context)
+                        }
+                    }
+                }) {
+                    Text("My Location")
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
