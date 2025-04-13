@@ -15,7 +15,7 @@ object RetrofitClient {
             val request = chain.request()
             val response = chain.proceed(request)
             val responseBody = response.peekBody(Long.MAX_VALUE)
-            Log.d("API_RESPONSE", responseBody.string())
+            // Log.d("API_RESPONSE", responseBody.string())
             response
         }
         .build()

@@ -63,9 +63,11 @@ fun hasNotificationPermission(context: Context): Boolean {
     ) == PackageManager.PERMISSION_GRANTED
 }
 
-/* Function to start the WeatherService. It is used in WeatherScreen to clean up the code a bit. */
+/* Function to start the WeatherService as a foreground service. This is needed for location-based
+   updates. Foreground services must show a notification quickly, but this will be handled elsewhere.
+   It is used in WeatherScreen and this helps to clean up the code a bit. */
 fun startWeatherService(context: Context) {
-    Log.d("WeatherDebug", "startWeatherService() called")
+    // Log.d("WeatherDebug", "startWeatherService() called")
     val intent = Intent(context, WeatherService::class.java)
     ContextCompat.startForegroundService(context, intent)
 }

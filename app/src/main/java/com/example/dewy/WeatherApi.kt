@@ -30,7 +30,7 @@ interface WeatherApi {
         @Query("cnt") days: Int = 16
     ): ForecastData
 
-    /* Assignment 5 */
+    /* Get weather by coordinates. */
     @GET("weather")
     suspend fun getWeatherCoord(
         @Query("lat") lat: Double,
@@ -38,5 +38,4 @@ interface WeatherApi {
         @Query("appid") apiKey: String,
         @Query("units") units: String = "imperial"
     ) : WeatherData
-    /* End Assignment 5 */
 }

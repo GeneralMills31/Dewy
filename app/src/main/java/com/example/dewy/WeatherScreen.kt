@@ -298,14 +298,14 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
 
             /* Requests notification permission. */
             val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                Log.d(TAG, "Notification permission result: $granted")
+                // Log.d(TAG, "Notification permission result: $granted")
                 startFlowIfPermissionGranted(context)
             }
 
             /* Requests location permission. Checks notification permission as well. If both are
             *  granted, it will start the weather service and data fetching to cause a live data update. */
             val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                Log.d(TAG, "Location permission result: $granted")
+                // Log.d(TAG, "Location permission result: $granted")
                 if (!hasNotificationPermission(context)) {
                     notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
@@ -319,11 +319,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 Button(onClick = {
                     when {
                         !hasLocationPermission(context) -> {
-                            Log.d(TAG, "Requesting location permission")
+                            // Log.d(TAG, "Requesting location permission")
                             locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                         }
                         !hasNotificationPermission(context) -> {
-                            Log.d(TAG, "Requesting notification permission")
+                            // Log.d(TAG, "Requesting notification permission")
                             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
                         else -> {
