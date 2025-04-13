@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -19,15 +20,22 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -130,7 +138,8 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -175,7 +184,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 /* Sub-column for managing key data (description and high/low values) */
                 Column(
                     modifier = Modifier
-                        .padding(vertical = 42.dp, horizontal = 18.dp),
+                        .padding(vertical = 42.dp, horizontal = 10.dp),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Bottom
                 ) {
@@ -199,7 +208,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 Column(
                     modifier = Modifier
                         .padding(vertical = 6.dp, horizontal = 6.dp)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .heightIn(max = 100.dp)
+                        .background((Color(0xFF98C0E5)))
+                        .padding(4.dp)
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Bottom
                 ) {
@@ -272,20 +285,6 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
             *  a boolean value based on the functions success. The button will then respond based
             *  on this boolean (display an error message or not). */
 
-            /* This TextField manages the user input. User can enter whatever they want, input
-            * will be checked and validated later. */
-            TextField(
-                value = zipCode,
-                onValueChange = {
-                    zipCode = it
-                },
-                label = { Text("Enter ZIP Code") },
-                isError = errorMessage != null,
-                /* For displaying the number pad. */
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
             /* Permission launchers follow a sequential pattern:
              * 1) If location is not granted, request it.
              * 2) If granted, check notification permission.
@@ -313,26 +312,51 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                 }
             }
 
-            /* Button that checks permission details and helps launch the service.
-            *  Works in tandem with the launchers to keep the flow reasonable. */
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                Button(onClick = {
-                    when {
-                        !hasLocationPermission(context) -> {
-                            // Log.d(TAG, "Requesting location permission")
-                            locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                /* This TextField manages the user input. User can enter whatever they want, input
+                *  will be checked and validated later. */
+                TextField(
+                    value = zipCode,
+                    onValueChange = {zipCode = it},
+                    label = { Text("Enter ZIP Code") },
+                    isError = errorMessage != null,
+                    /* For displaying the number pad. */
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f),
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                /* Button that checks permission details and helps launch the service.
+                *  Works in tandem with the launchers to keep the flow reasonable. */
+                Button(
+                    onClick = {
+                        when {
+                            !hasLocationPermission(context) -> {
+                                locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                            }
+                            !hasNotificationPermission(context) -> {
+                                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                            else -> {
+                                startFlowIfPermissionGranted(context)
+                            }
                         }
-                        !hasNotificationPermission(context) -> {
-                            // Log.d(TAG, "Requesting notification permission")
-                            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                        else -> {
-                            startFlowIfPermissionGranted(context)
-                        }
-                    }
-                }) {
-                    Text("My Location")
+                    },
+                    contentPadding = PaddingValues(4.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.LocationOn,
+                        contentDescription = "My Location Button",
+                        tint = Color.White
+                    )
                 }
+
             }
 
             Spacer(modifier = Modifier.height(8.dp))
