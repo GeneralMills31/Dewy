@@ -51,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
+import com.example.dewy.util.TestHelper
 
 @Composable
 /* Make a simple descriptive card for the day that is passed through. This is used for the WeatherScreens
@@ -67,7 +69,8 @@ fun ForecastCardRow(daily: DailyForecast) {
     val day = getDayOfWeek(daily.dt)
     Card(
         modifier = Modifier
-            .size(width = 80.dp, height = 120.dp),
+            .size(width = 80.dp, height = 120.dp)
+            .testTag("ForecastCard"),
         colors = CardDefaults.cardColors(containerColor = Color(0xAAFFFFFF))
     ) {
         Column(
@@ -120,11 +123,18 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
     val TAG = "WeatherDebug"
 
 
-    /* Launch on startup and with default location (Faribault, MN) */
-    LaunchedEffect(Unit) {
-        viewModel.fetchWeather(zipCode)
-        viewModel.fetchForecast(zipCode)
+    /* Launch on startup and with default location (Faribault, MN). Updated for testing. */
+    LaunchedEffect(zipCode) {
+        if (!TestHelper.isRunningTest()) {
+            if (weatherData == null) {
+                viewModel.fetchWeather(zipCode)
+            }
+            if (forecastData == null) {
+                viewModel.fetchForecast(zipCode)
+            }
+        }
     }
+
 
     /* Box to hold and organize WeatherScreen data */
     Box(
@@ -160,7 +170,8 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
             Image(
                 painter = painterResource(icon),
                 contentDescription = "Weather Icon",
-                modifier = Modifier.size(200.dp),
+                modifier = Modifier.size(200.dp)
+                    .testTag("WeatherIcon")
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -295,23 +306,6 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
              *       In cases like this, nothing will happen. Should try to make the situation
              *       clearer to the user. */
 
-            /* Requests notification permission. */
-            val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                // Log.d(TAG, "Notification permission result: $granted")
-                startFlowIfPermissionGranted(context)
-            }
-
-            /* Requests location permission. Checks notification permission as well. If both are
-            *  granted, it will start the weather service and data fetching to cause a live data update. */
-            val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                // Log.d(TAG, "Location permission result: $granted")
-                if (!hasNotificationPermission(context)) {
-                    notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                } else {
-                    startFlowIfPermissionGranted(context)
-                }
-            }
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -327,10 +321,27 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                     isError = errorMessage != null,
                     /* For displaying the number pad. */
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).testTag("ZipInput")
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
+
+                /* Requests notification permission. */
+                val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                    // Log.d(TAG, "Notification permission result: $granted")
+                    startFlowIfPermissionGranted(context)
+                }
+
+                /* Requests location permission. Checks notification permission as well. If both are
+                *  granted, it will start the weather service and data fetching to cause a live data update. */
+                val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                    // Log.d(TAG, "Location permission result: $granted")
+                    if (!hasNotificationPermission(context)) {
+                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        startFlowIfPermissionGranted(context)
+                    }
+                }
 
                 /* Button that checks permission details and helps launch the service.
                 *  Works in tandem with the launchers to keep the flow reasonable. */
@@ -348,7 +359,8 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                             }
                         }
                     },
-                    contentPadding = PaddingValues(4.dp),
+                    modifier = Modifier.testTag("GetWeatherButton"),
+                    contentPadding = PaddingValues(4.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Filled.LocationOn,
@@ -356,7 +368,6 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                         tint = Color.White
                     )
                 }
-
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -391,7 +402,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel(), navController: NavH
                         errorMessage = "Zip code must be 5 digits."
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().testTag("MyLocationButton")
             ) {
                 Text("Get Weather")
             }

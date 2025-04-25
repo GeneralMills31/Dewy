@@ -5,10 +5,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 /* Fetch data (manages API requests) and store results in LiveData. */
-class WeatherViewModel : ViewModel() {
+open class WeatherViewModel : ViewModel() {
     /* Define LiveData variables to hold API response and that ViewModel can change. */
-    private val _weatherData = MutableLiveData<WeatherData?>()
-    private val _forecastData = MutableLiveData<ForecastData?>()
+    val _weatherData = MutableLiveData<WeatherData?>()
+    val _forecastData = MutableLiveData<ForecastData?>()
     /* UI will observe this to update data. Read-only reference to _weatherData; updates with _weatherData. */
     val weatherData: LiveData<WeatherData?> = _weatherData
     val forecastData: LiveData<ForecastData?> = _forecastData
