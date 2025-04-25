@@ -11,6 +11,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,7 +41,7 @@ fun ForecastCardColumn(daily: DailyForecast) {
             Image(
                 painter = painterResource(id = icon),
                 contentDescription = null,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(40.dp).testTag("ForecastIcon")
             )
             Text("${daily.temp.min.toInt()}° / ${daily.temp.max.toInt()}°", fontSize = 12.sp)
         }
@@ -50,8 +51,11 @@ fun ForecastCardColumn(daily: DailyForecast) {
 @Composable
 fun ForecastScreen(viewModel: WeatherViewModel = viewModel(), zip: String = "55101", navController: NavController) {
 
+    /* Adjusted to help with testing. */
     LaunchedEffect(zip) {
-        viewModel.fetchForecast(zip)
+        if (viewModel.forecastData.value == null) {
+            viewModel.fetchForecast(zip)
+        }
     }
 
     val forecastData by viewModel.forecastData.observeAsState()
